@@ -1,0 +1,24 @@
+{
+  "name": "wiki-agent",
+  "version": "0.1.1",
+  "description": "Persistent memory wiki for LLM agents — sub-agent orchestration for OpenCode",
+  "type": "module",
+  "bin": {
+    "wiki-agent": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
