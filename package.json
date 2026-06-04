@@ -3,6 +3,19 @@
   "version": "0.2.0",
   "description": "Persistent memory wiki for LLM agents — sub-agent orchestration, auto-learning, and BM25 search",
   "type": "module",
+  "author": "Jose Correa <josecorreadev@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joseecorrea/wiki-agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joseecorrea/wiki-agent/issues"
+  },
+  "homepage": "https://github.com/joseecorrea/wiki-agent#readme",
+  "keywords": ["wiki", "agent", "mcp", "llm", "memory"],
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "wiki-agent": "./dist/cli.js",
     "wiki-agent-mcp": "./dist/mcp-server.js"
