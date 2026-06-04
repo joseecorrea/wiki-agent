@@ -1,9 +1,8 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import type { Harness } from "../core/types.js";
 
-export type Harness = "opencode" | "claude-code" | "codex";
-
-const HARNESS_DETECTORS: Record<Harness, (projectDir: string) => boolean> = {
+const HARNESS_DETECTORS: Record<Exclude<Harness, "cursor">, (projectDir: string) => boolean> = {
   opencode: (dir) =>
     existsSync(join(dir, "opencode.json")) ||
     existsSync(join(dir, "opencode.jsonc")) ||
@@ -16,23 +15,30 @@ const HARNESS_DETECTORS: Record<Harness, (projectDir: string) => boolean> = {
     existsSync(join(dir, "AGENTS.md")) && !existsSync(join(dir, ".opencode")),
 };
 
-export function detectHarness(projectDir: string): Harness | null {
+export function detectHarnesses(projectDir: string): Harness[] {
+  const detected: Harness[] = [];
   for (const [harness, detector] of Object.entries(HARNESS_DETECTORS)) {
     if (detector(projectDir)) {
-      return harness as Harness;
+      detected.push(harness as Harness);
     }
   }
-  return null;
+  return detected;
+}
+
+export function getAllHarnesses(): Harness[] {
+  return ["opencode", "claude-code", "codex", "cursor"];
+}
+
+export interface HarnessConfig {
+  agentsDir: string;
+  mainInstructions: string;
+  configJson?: string;
 }
 
 export function getHarnessConfigPath(
   harness: Harness,
   projectDir: string,
-): {
-  agentsDir: string;
-  mainInstructions: string;
-  configJson?: string;
-} {
+): HarnessConfig {
   switch (harness) {
     case "opencode":
       return {
@@ -49,6 +55,11 @@ export function getHarnessConfigPath(
       return {
         agentsDir: join(projectDir, ".codex", "agents"),
         mainInstructions: join(projectDir, "AGENTS.md"),
+      };
+    case "cursor":
+      return {
+        agentsDir: join(projectDir, ".cursor", "agents"),
+        mainInstructions: join(projectDir, ".cursorrules"),
       };
   }
 }
