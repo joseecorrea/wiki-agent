@@ -1,0 +1,92 @@
+import { resolve } from "node:path";
+import { parseArgs } from "node:util";
+import { initCommand } from "./commands/init.js";
+import { statusCommand } from "./commands/status.js";
+import { searchCommand } from "./commands/search.js";
+import { indexCommand } from "./commands/index-cmd.js";
+
+async function main() {
+  const { values, positionals } = parseArgs({
+    options: {
+      harness: { type: "string" },
+      dir: { type: "string" },
+      type: { type: "string" },
+      confidence: { type: "string" },
+      tags: { type: "string" },
+      help: { type: "boolean", short: "h" },
+    },
+    strict: false,
+    allowPositionals: true,
+  });
+
+  if (values.help) {
+    printHelp();
+    return;
+  }
+
+  const command = positionals[0];
+  const projectDir = values.dir ? resolve(values.dir as string) : process.cwd();
+
+  switch (command) {
+    case "init": {
+      await initCommand(projectDir, values.harness as string | undefined);
+      break;
+    }
+    case "status": {
+      await statusCommand(projectDir);
+      break;
+    }
+    case "search": {
+      const query = positionals.slice(1).join(" ");
+      if (!query) {
+        console.error('Please provide a search query. Usage: wiki-agent search <query>');
+        process.exit(1);
+      }
+      await searchCommand(query, projectDir, {
+        type: values.type as string | undefined,
+        confidence: values.confidence as string | undefined,
+        tags: values.tags ? (values.tags as string).split(",") : undefined,
+      });
+      break;
+    }
+    case "index": {
+      await indexCommand(projectDir);
+      break;
+    }
+    default:
+      console.error("Unknown command: " + (command ?? "") + '. Run "wiki-agent --help" for usage.');
+      printHelp();
+      process.exit(1);
+  }
+}
+
+function printHelp() {
+  console.log(`
+wiki-agent - Persistent memory wiki for LLM agents
+
+Usage:
+  wiki-agent init [options]        Initialize wiki in a project
+  wiki-agent status [options]      Show wiki status
+  wiki-agent search <query> [opts] Search the wiki
+  wiki-agent index [options]       Build/rebuild the search index
+
+Options:
+  --harness <type>    Agent harness (only for init)
+  --dir <path>        Project directory (default: .)
+  --type <type>       Filter by page type (search)
+  --confidence <lvl>  Filter by confidence (search)
+  --tags <t1,t2>      Filter by tags (search)
+  -h, --help          Show this help message
+
+Supported harnesses:
+  opencode            OpenCode with .opencode/ and AGENTS.md
+  claude-code         Claude Code with .claude/ and CLAUDE.md
+  codex               Codex with .codex/ and AGENTS.md
+  cursor              Cursor with .cursor/ and .cursorrules
+`);
+}
+
+main().catch((err) => {
+  console.error("Error:", err.message);
+  process.exit(1);
+});

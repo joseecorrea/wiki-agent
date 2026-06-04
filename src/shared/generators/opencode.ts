@@ -24,6 +24,12 @@ const WIKI_INITIAL_FILES: Record<string, string> = {
 ## Decisions
 <!-- List decision pages here as they are created -->
 
+## Patterns
+<!-- List pattern pages here as they are created -->
+
+## Gotchas
+<!-- List gotcha pages here as they are created -->
+
 ## Sources
 <!-- List ingested sources here -->
 `,
@@ -77,19 +83,25 @@ export function generateForOpenCode(
     const fullPath = join(projectDir, dir);
     if (!existsSync(fullPath)) {
       mkdirSync(fullPath, { recursive: true });
-      actions.push(`Created directory: ${dir}/`);
+      actions.push("Created directory: " + dir + "/");
     } else {
-      actions.push(`Directory already exists: ${dir}/`);
+      actions.push("Directory already exists: " + dir + "/");
     }
+  }
+
+  const indexDir = join(projectDir, ".wiki-agent");
+  if (!existsSync(indexDir)) {
+    mkdirSync(indexDir, { recursive: true });
+    actions.push("Created directory: .wiki-agent/");
   }
 
   for (const [filePath, content] of Object.entries(WIKI_INITIAL_FILES)) {
     const fullPath = join(projectDir, filePath);
     if (!existsSync(fullPath)) {
       writeFileSync(fullPath, content, "utf-8");
-      actions.push(`Created file: ${filePath}`);
+      actions.push("Created file: " + filePath);
     } else {
-      actions.push(`File already exists, skipped: ${filePath}`);
+      actions.push("File already exists, skipped: " + filePath);
     }
   }
 
@@ -99,20 +111,20 @@ export function generateForOpenCode(
   }
 
   for (const agentName of WIKI_AGENTS) {
-    const destPath = join(agentsDir, `${agentName}.md`);
+    const destPath = join(agentsDir, agentName + ".md");
     if (!existsSync(destPath)) {
       const template = templates.get(agentName);
       if (template) {
         writeFileSync(destPath, template, "utf-8");
-        actions.push(`Created sub-agent: .opencode/agents/${agentName}.md`);
+        actions.push("Created sub-agent: .opencode/agents/" + agentName + ".md");
       } else {
         warnings.push(
-          `Template not found for ${agentName}. Agent file needs to be created manually.`,
+          "Template not found for " + agentName + ". Agent file needs to be created manually.",
         );
       }
     } else {
       actions.push(
-        `Sub-agent already exists, skipped: .opencode/agents/${agentName}.md`,
+        "Sub-agent already exists, skipped: .opencode/agents/" + agentName + ".md",
       );
     }
   }
@@ -135,7 +147,7 @@ export function generateForOpenCode(
   if (existsSync(opencodeJsonPath)) {
     const agentConfig = buildAgentConfig();
     mergeIntoJson(opencodeJsonPath, agentConfig);
-    actions.push("Updated opencode.json with wiki-agent definitions");
+    actions.push("Updated opencode.json with wiki-agent definitions and MCP server");
   } else {
     const config = buildFullConfig();
     writeFileSync(
@@ -143,7 +155,7 @@ export function generateForOpenCode(
       JSON.stringify(config, null, 2) + "\n",
       "utf-8",
     );
-    actions.push("Created opencode.json with wiki-agent configuration");
+    actions.push("Created opencode.json with wiki-agent configuration and MCP server");
   }
 
   const specDest = join(projectDir, "wiki-spec.md");
@@ -159,7 +171,13 @@ export function generateForOpenCode(
 
 function buildAgentConfig(): Record<string, unknown> {
   return {
-    instructions: ["AGENTS.md"],
+    mcp: {
+      "wiki-agent": {
+        type: "local",
+        command: ["npx", "-y", "wiki-agent-mcp"],
+        enabled: true,
+      },
+    },
     agent: Object.fromEntries(
       WIKI_AGENTS.map((name) => [
         name,
@@ -176,6 +194,13 @@ function buildFullConfig(): Record<string, unknown> {
   return {
     $schema: "https://opencode.ai/config.json",
     instructions: ["AGENTS.md"],
+    mcp: {
+      "wiki-agent": {
+        type: "local",
+        command: ["npx", "-y", "wiki-agent-mcp"],
+        enabled: true,
+      },
+    },
     agent: Object.fromEntries(
       WIKI_AGENTS.map((name) => [
         name,
