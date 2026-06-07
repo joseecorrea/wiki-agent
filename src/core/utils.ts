@@ -1,5 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { withFileLock } from "./lock.js";
+import { writeFileAtomic } from "./atomic-write.js";
 
 export const WIKI_DIR_NAME = "wiki";
 export const RAW_DIR_NAME = "raw";
@@ -75,7 +77,9 @@ export function readText(filePath: string): string | null {
 
 export function writeText(filePath: string, content: string): void {
   ensureDir(filePath);
-  writeFileSync(filePath, content, "utf-8");
+  withFileLock(filePath, () => {
+    writeFileAtomic(filePath, content);
+  });
 }
 
 export function resolveRelativeTo(projectDir: string, filePath: string): string {
