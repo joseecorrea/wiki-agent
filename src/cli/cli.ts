@@ -1,6 +1,8 @@
 import { resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { initCommand } from "./commands/init.js";
+import { addHarnessCommand } from "./commands/add-harness.js";
+import { removeCommand } from "./commands/remove.js";
 import { statusCommand } from "./commands/status.js";
 import { searchCommand } from "./commands/search.js";
 import { indexCommand } from "./commands/index-cmd.js";
@@ -13,6 +15,7 @@ async function main() {
       type: { type: "string" },
       confidence: { type: "string" },
       tags: { type: "string" },
+      force: { type: "boolean", short: "f" },
       help: { type: "boolean", short: "h" },
     },
     strict: false,
@@ -53,6 +56,15 @@ async function main() {
       await indexCommand(projectDir);
       break;
     }
+    case "add-harness": {
+      const harness = positionals[1];
+      await addHarnessCommand(projectDir, harness);
+      break;
+    }
+    case "remove": {
+      await removeCommand(projectDir, values.force as boolean | undefined);
+      break;
+    }
     default:
       console.error("Unknown command: " + (command ?? "") + '. Run "wiki-agent --help" for usage.');
       printHelp();
@@ -65,10 +77,12 @@ function printHelp() {
 wiki-agent - Persistent memory wiki for LLM agents
 
 Usage:
-  wiki-agent init [options]        Initialize wiki in a project
-  wiki-agent status [options]      Show wiki status
-  wiki-agent search <query> [opts] Search the wiki
-  wiki-agent index [options]       Build/rebuild the search index
+  wiki-agent init [options]           Initialize wiki in a project
+  wiki-agent add-harness <harness>    Add sub-agents for a specific harness
+  wiki-agent remove [options]         Remove all wiki-agent data from project
+  wiki-agent status [options]         Show wiki status
+  wiki-agent search <query> [opts]    Search the wiki
+  wiki-agent index [options]          Build/rebuild the search index
 
 Options:
   --harness <type>    Agent harness (only for init)
@@ -76,6 +90,7 @@ Options:
   --type <type>       Filter by page type (search)
   --confidence <lvl>  Filter by confidence (search)
   --tags <t1,t2>      Filter by tags (search)
+  -f, --force         Skip confirmation prompts (remove)
   -h, --help          Show this help message
 
 Supported harnesses:

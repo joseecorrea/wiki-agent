@@ -533,10 +533,10 @@ The \`.wiki-agent/index.json\` file contains a BM25 inverted index built from al
 ## Cross-Harness Compatibility
 
 This spec is designed to be implementable across different agent harnesses:
-- **OpenCode**: Sub-agents defined in \`.opencode/agents/\`, orchestration in \`AGENTS.md\`, MCP in \`opencode.json\`
-- **Claude Code**: Adapted as CLAUDE.md instructions
-- **Codex**: Adapted as AGENTS.md instructions
-- **Cursor**: Adapted as .cursorrules instructions
+- **OpenCode**: Sub-agents defined in '.opencode/agents/', orchestration in 'AGENTS.md', MCP in 'opencode.json'
+- **Claude Code**: Sub-agents defined in '.claude/agents/', orchestration in 'CLAUDE.md'
+- **Codex**: Sub-agents defined in '.codex/agents/', orchestration in 'AGENTS.md'
+- **Cursor**: Sub-agents defined in '.cursor/agents/', orchestration in '.cursorrules'
 
-The wiki file format (markdown with enriched frontmatter, \`[[wikilinks]]\`, index, log) is harness-agnostic and works with any markdown-aware tool.
+The wiki file format (markdown with enriched frontmatter, [[wikilinks]], index, log) is harness-agnostic and works with any markdown-aware tool.
 `;

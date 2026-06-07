@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { Harness } from "../core/types.js";
 
-const HARNESS_DETECTORS: Record<Exclude<Harness, "cursor">, (projectDir: string) => boolean> = {
+const HARNESS_DETECTORS: Record<Harness, (projectDir: string) => boolean> = {
   opencode: (dir) =>
     existsSync(join(dir, "opencode.json")) ||
     existsSync(join(dir, "opencode.jsonc")) ||
@@ -12,7 +12,11 @@ const HARNESS_DETECTORS: Record<Exclude<Harness, "cursor">, (projectDir: string)
     existsSync(join(dir, "CLAUDE.md")) ||
     existsSync(join(dir, ".claude")),
   codex: (dir) =>
-    existsSync(join(dir, "AGENTS.md")) && !existsSync(join(dir, ".opencode")),
+    existsSync(join(dir, ".codex")) ||
+    (existsSync(join(dir, "AGENTS.md")) && !existsSync(join(dir, ".opencode"))),
+  cursor: (dir) =>
+    existsSync(join(dir, ".cursorrules")) ||
+    existsSync(join(dir, ".cursor")),
 };
 
 export function detectHarnesses(projectDir: string): Harness[] {
