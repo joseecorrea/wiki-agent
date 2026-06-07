@@ -1,6 +1,6 @@
 {
   "name": "wiki-agent",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Persistent memory wiki for LLM agents — sub-agent orchestration, auto-learning, and BM25 search",
   "type": "module",
   "author": "Jose Correa <josecorreadev@gmail.com>",

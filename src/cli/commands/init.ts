@@ -14,7 +14,7 @@ const HARNESS_LABELS: Record<Harness, string> = {
 };
 
 export async function initCommand(projectDir: string, harnessFlag?: string): Promise<void> {
-  clack.intro("Wiki-Agent v0.2.0");
+  clack.intro("Wiki-Agent v0.3.0");
 
   const s = clack.spinner();
   s.start("Scanning project for agent harnesses...");

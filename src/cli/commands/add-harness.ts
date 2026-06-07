@@ -14,7 +14,7 @@ const HARNESS_LABELS: Record<Harness, string> = {
 };
 
 export async function addHarnessCommand(projectDir: string, harnessArg?: string): Promise<void> {
-  clack.intro("Wiki-Agent v0.2.0");
+  clack.intro("Wiki-Agent v0.3.0");
 
   if (!existsSync(join(projectDir, "wiki"))) {
     clack.log.error("No wiki found. Run 'wiki-agent init' first.");

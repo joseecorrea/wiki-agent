@@ -165,7 +165,7 @@ function removeRawIfEmpty(projectDir: string): void {
 }
 
 export async function removeCommand(projectDir: string, force = false): Promise<void> {
-  clack.intro("Wiki-Agent v0.2.0");
+  clack.intro("Wiki-Agent v0.3.0");
 
   const items = collectItems(projectDir);
 
