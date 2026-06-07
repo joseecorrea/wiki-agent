@@ -1,7 +1,8 @@
 import { resolve } from "node:path";
 import * as clack from "@clack/prompts";
 import { detectHarnesses, getAllHarnesses } from "../../shared/detectors.js";
-import { generateForOpenCode } from "../../shared/generators/opencode.js";
+import { generateSubagentsForHarness } from "../../shared/generators/index.js";
+import { createWikiStructure, createWikiSpec } from "../../shared/generators/common.js";
 import { TEMPLATES, WIKI_SPEC, WIKI_SECTION } from "../../shared/templates.js";
 import type { Harness } from "../../core/types.js";
 
@@ -32,14 +33,41 @@ export async function initCommand(projectDir: string, harnessFlag?: string): Pro
     process.exit(0);
   }
 
+  // Step 1: Create base wiki structure (common to all harnesses)
+  s.start("Creating wiki structure...");
+  const actions: string[] = [];
+  const warnings: string[] = [];
+  const templates = new Map(Object.entries(TEMPLATES));
+
+  createWikiStructure(projectDir, actions, warnings);
+  createWikiSpec(projectDir, WIKI_SPEC, actions);
+  s.stop("Wiki structure created");
+
+  for (const action of actions) {
+    clack.log.success(action);
+  }
+  for (const warning of warnings) {
+    clack.log.warn(warning);
+  }
+
+  // Step 2: Ask which harnesses to create sub-agents for
   let selectedHarnesses: Harness[];
 
   if (harnessFlag) {
     selectedHarnesses = [harnessFlag as Harness];
     clack.log.success("Harness specified: " + HARNESS_LABELS[harnessFlag as Harness]);
   } else if (detected.length === 1) {
-    selectedHarnesses = detected;
-    clack.log.success("Auto-selected: " + HARNESS_LABELS[detected[0]]);
+    const confirm = await clack.confirm({
+      message: "Create wiki sub-agents for " + HARNESS_LABELS[detected[0]] + "?",
+      initialValue: true,
+    });
+
+    if (clack.isCancel(confirm)) {
+      clack.cancel("Cancelled");
+      process.exit(0);
+    }
+
+    selectedHarnesses = confirm ? detected : [];
   } else if (detected.length === 0) {
     const allHarnesses = getAllHarnesses();
     const options = allHarnesses.map((h) => ({
@@ -48,9 +76,9 @@ export async function initCommand(projectDir: string, harnessFlag?: string): Pro
     }));
 
     const selection = await clack.multiselect({
-      message: "Select harnesses to configure",
+      message: "Select harnesses to create wiki sub-agents for",
       options,
-      required: true,
+      required: false,
     });
 
     if (clack.isCancel(selection)) {
@@ -58,7 +86,7 @@ export async function initCommand(projectDir: string, harnessFlag?: string): Pro
       process.exit(0);
     }
 
-    selectedHarnesses = selection as Harness[];
+    selectedHarnesses = (selection as string[]).map((s) => s as Harness);
   } else {
     const allHarnesses = getAllHarnesses();
     const options = allHarnesses.map((h) => ({
@@ -68,10 +96,10 @@ export async function initCommand(projectDir: string, harnessFlag?: string): Pro
     }));
 
     const selection = await clack.multiselect({
-      message: "Select harnesses to configure",
+      message: "Select harnesses to create wiki sub-agents for",
       options,
       initialValues: detected,
-      required: true,
+      required: false,
     });
 
     if (clack.isCancel(selection)) {
@@ -79,37 +107,36 @@ export async function initCommand(projectDir: string, harnessFlag?: string): Pro
       process.exit(0);
     }
 
-    selectedHarnesses = selection as Harness[];
+    selectedHarnesses = (selection as string[]).map((s) => s as Harness);
   }
 
   if (selectedHarnesses.length === 0) {
-    clack.cancel("No harness selected");
-    process.exit(1);
+    clack.outro("Wiki initialized without sub-agents.\n\n  Wiki: " + resolve(projectDir, "wiki") + "\n\n  You can add sub-agents later with: wiki-agent add-harness <harness>");
+    return;
   }
 
-  s.start("Building wiki structure...");
+  s.start("Creating sub-agents...");
 
-  const templates = new Map(Object.entries(TEMPLATES));
+  const subActions: string[] = [];
+  const subWarnings: string[] = [];
 
-  if (!selectedHarnesses.includes("opencode")) {
-    s.stop("Failed");
-    clack.log.error("Only OpenCode harness is supported in v0.2.0. Support for " + selectedHarnesses.join(", ") + " coming soon.");
-    process.exit(1);
+  for (const harness of selectedHarnesses) {
+    generateSubagentsForHarness(
+      harness,
+      projectDir,
+      templates,
+      WIKI_SECTION,
+      subActions,
+      subWarnings,
+    );
   }
 
-  const { actions, warnings } = generateForOpenCode(
-    projectDir,
-    templates,
-    WIKI_SPEC,
-    WIKI_SECTION,
-  );
+  s.stop("Sub-agents created");
 
-  s.stop("Wiki structure built");
-
-  for (const action of actions) {
+  for (const action of subActions) {
     clack.log.success(action);
   }
-  for (const warning of warnings) {
+  for (const warning of subWarnings) {
     clack.log.warn(warning);
   }
 
