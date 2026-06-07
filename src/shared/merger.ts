@@ -1,5 +1,7 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { withFileLock } from "../core/lock.js";
+import { writeFileAtomic } from "../core/atomic-write.js";
 
 const START_MARKER = "<!-- WIKI-AGENT:START -->";
 const END_MARKER = "<!-- WIKI-AGENT:END -->";
@@ -8,69 +10,69 @@ export function mergeIntoFile(
   filePath: string,
   content: string,
 ): "created" | "inserted" | "replaced" {
-  if (!existsSync(filePath)) {
-    const dir = dirname(filePath);
-    if (!existsSync(dir)) {
-      throw new Error(`Directory does not exist: ${dir}`);
+  return withFileLock(filePath, () => {
+    if (!existsSync(filePath)) {
+      const dir = dirname(filePath);
+      if (!existsSync(dir)) {
+        throw new Error(`Directory does not exist: ${dir}`);
+      }
+      writeFileAtomic(
+        filePath,
+        `${START_MARKER}\n${content}\n${END_MARKER}\n`,
+      );
+      return "created";
     }
-    writeFileSync(
+
+    const existing = readFileSync(filePath, "utf-8");
+    const startIndex = existing.indexOf(START_MARKER);
+    const endIndex = existing.indexOf(END_MARKER);
+
+    if (startIndex !== -1 && endIndex !== -1) {
+      const before = existing.substring(0, startIndex);
+      const after = existing.substring(endIndex + END_MARKER.length);
+      writeFileAtomic(
+        filePath,
+        `${before}${START_MARKER}\n${content}\n${END_MARKER}${after}`,
+      );
+      return "replaced";
+    }
+
+    const needsNewline = !existing.endsWith("\n");
+    writeFileAtomic(
       filePath,
-      `${START_MARKER}\n${content}\n${END_MARKER}\n`,
-      "utf-8",
+      `${existing}${needsNewline ? "\n" : ""}\n${START_MARKER}\n${content}\n${END_MARKER}\n`,
     );
-    return "created";
-  }
-
-  const existing = readFileSync(filePath, "utf-8");
-  const startIndex = existing.indexOf(START_MARKER);
-  const endIndex = existing.indexOf(END_MARKER);
-
-  if (startIndex !== -1 && endIndex !== -1) {
-    const before = existing.substring(0, startIndex);
-    const after = existing.substring(endIndex + END_MARKER.length);
-    writeFileSync(
-      filePath,
-      `${before}${START_MARKER}\n${content}\n${END_MARKER}${after}`,
-      "utf-8",
-    );
-    return "replaced";
-  }
-
-  const needsNewline = !existing.endsWith("\n");
-  writeFileSync(
-    filePath,
-    `${existing}${needsNewline ? "\n" : ""}\n${START_MARKER}\n${content}\n${END_MARKER}\n`,
-    "utf-8",
-  );
-  return "inserted";
+    return "inserted";
+  });
 }
 
 export function mergeIntoJson(
   filePath: string,
   content: Record<string, unknown>,
 ): "created" | "merged" {
-  if (!existsSync(filePath)) {
-    const dir = dirname(filePath);
-    if (!existsSync(dir)) {
-      throw new Error(`Directory does not exist: ${dir}`);
+  return withFileLock(filePath, () => {
+    if (!existsSync(filePath)) {
+      const dir = dirname(filePath);
+      if (!existsSync(dir)) {
+        throw new Error(`Directory does not exist: ${dir}`);
+      }
+      writeFileAtomic(
+        filePath,
+        JSON.stringify(content, null, 2) + "\n",
+      );
+      return "created";
     }
-    writeFileSync(
-      filePath,
-      JSON.stringify(content, null, 2) + "\n",
-      "utf-8",
-    );
-    return "created";
-  }
 
-  const existing = JSON.parse(readFileSync(filePath, "utf-8")) as Record<
-    string,
-    unknown
-  >;
+    const existing = JSON.parse(readFileSync(filePath, "utf-8")) as Record<
+      string,
+      unknown
+    >;
 
-  const merged = deepMerge(existing, content);
+    const merged = deepMerge(existing, content);
 
-  writeFileSync(filePath, JSON.stringify(merged, null, 2) + "\n", "utf-8");
-  return "merged";
+    writeFileAtomic(filePath, JSON.stringify(merged, null, 2) + "\n");
+    return "merged";
+  });
 }
 
 function deepMerge(
@@ -102,21 +104,23 @@ function deepMerge(
 }
 
 export function removeSection(filePath: string): boolean {
-  if (!existsSync(filePath)) return false;
+  return withFileLock(filePath, () => {
+    if (!existsSync(filePath)) return false;
 
-  const existing = readFileSync(filePath, "utf-8");
-  const startIndex = existing.indexOf("<!-- WIKI-AGENT:START -->");
-  const endIndex = existing.indexOf("<!-- WIKI-AGENT:END -->");
+    const existing = readFileSync(filePath, "utf-8");
+    const startIndex = existing.indexOf("<!-- WIKI-AGENT:START -->");
+    const endIndex = existing.indexOf("<!-- WIKI-AGENT:END -->");
 
-  if (startIndex === -1 || endIndex === -1) return false;
+    if (startIndex === -1 || endIndex === -1) return false;
 
-  const before = existing.substring(0, startIndex);
-  const after = existing.substring(
-    endIndex + "<!-- WIKI-AGENT:END -->".length,
-  );
+    const before = existing.substring(0, startIndex);
+    const after = existing.substring(
+      endIndex + "<!-- WIKI-AGENT:END -->".length,
+    );
 
-  const cleaned = (before + after).replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
+    const cleaned = (before + after).replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
 
-  writeFileSync(filePath, cleaned, "utf-8");
-  return true;
+    writeFileAtomic(filePath, cleaned);
+    return true;
+  });
 }

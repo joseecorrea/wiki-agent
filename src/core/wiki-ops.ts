@@ -5,14 +5,23 @@ import { search as bm25Search, getPageExcerpt } from "./search.js";
 import { findPotentialConflicts } from "./judge.js";
 import { parsePage, extractWikiLinks } from "./markdown.js";
 import { getWikiDir, getPagesDir, listPageFiles, readText } from "./utils.js";
+import { withIndexLock } from "./lock.js";
 import type { SearchResult, LintReport, ConflictPair } from "./types.js";
 
 export function searchWiki(projectDir: string, query: string, options?: { type?: string; confidence?: string; tags?: string[]; limit?: number }): SearchResult[] {
   let index = loadIndex(projectDir);
   if (!index || isIndexStale(projectDir, index)) {
     if (!existsSync(getWikiDir(projectDir))) return [];
-    index = buildIndex(projectDir);
-    saveIndex(projectDir, index);
+    index = withIndexLock(projectDir, () => {
+      // Double-check inside lock to avoid redundant rebuilds
+      const current = loadIndex(projectDir);
+      if (current && !isIndexStale(projectDir, current)) {
+        return current;
+      }
+      const fresh = buildIndex(projectDir);
+      saveIndex(projectDir, fresh);
+      return fresh;
+    });
   }
 
   const results = bm25Search(query, index, options);
@@ -28,9 +37,11 @@ export function searchWiki(projectDir: string, query: string, options?: { type?:
 }
 
 export function buildAndSaveIndex(projectDir: string): number {
-  const index = buildIndex(projectDir);
-  saveIndex(projectDir, index);
-  return index.stats.totalPages;
+  return withIndexLock(projectDir, () => {
+    const index = buildIndex(projectDir);
+    saveIndex(projectDir, index);
+    return index.stats.totalPages;
+  });
 }
 
 export function lintWiki(projectDir: string): LintReport {

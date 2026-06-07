@@ -3,6 +3,7 @@ import { join, relative, dirname } from "node:path";
 import { tokenize, tokenizeWithPositions } from "./tokenizer.js";
 import { parsePage } from "./markdown.js";
 import { normalizePageId, getPagesDir, getWikiDir, getIndexPath, listPageFiles, readText } from "./utils.js";
+import { writeFileAtomic } from "./atomic-write.js";
 import type { InvertedIndex, IndexEntry, PageMeta, IndexStats, Page } from "./types.js";
 
 const INDEX_VERSION = 1;
@@ -140,5 +141,5 @@ export function saveIndex(projectDir: string, index: InvertedIndex): void {
   if (!existsSync(indexDir)) {
     mkdirSync(indexDir, { recursive: true });
   }
-  writeFileSync(indexPath, JSON.stringify(index, null, 2), "utf-8");
+  writeFileAtomic(indexPath, JSON.stringify(index, null, 2));
 }
