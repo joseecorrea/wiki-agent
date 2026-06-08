@@ -4,7 +4,7 @@ import { buildIndex, saveIndex, loadIndex, isIndexStale } from "./index-builder.
 import { search as bm25Search, getPageExcerpt } from "./search.js";
 import { findPotentialConflicts } from "./judge.js";
 import { parsePage, extractWikiLinks } from "./markdown.js";
-import { getWikiDir, getPagesDir, listPageFiles, readText } from "./utils.js";
+import { getWikiDir, getPagesDir, listPageFiles, readText, resolveSafePath } from "./utils.js";
 import { withIndexLock } from "./lock.js";
 import type { SearchResult, LintReport, ConflictPair } from "./types.js";
 
@@ -27,7 +27,7 @@ export function searchWiki(projectDir: string, query: string, options?: { type?:
   const results = bm25Search(query, index, options);
 
   return results.map((r) => {
-    const fullPath = join(projectDir, r.path);
+    const fullPath = resolveSafePath(projectDir, r.path);
     const raw = readText(fullPath);
     if (raw) {
       r.excerpt = getPageExcerpt(raw, query);

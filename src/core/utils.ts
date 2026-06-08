@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { withFileLock } from "./lock.js";
 import { writeFileAtomic } from "./atomic-write.js";
 
@@ -34,6 +34,20 @@ export function getIndexDir(projectDir: string): string {
   return join(getMemoryDir(projectDir), INDEX_DIR_NAME);
 }
 
+/**
+ * Resolve a path relative to a base directory, ensuring the result stays within the base.
+ * Throws if path traversal (e.g. `../`) would escape the base directory.
+ */
+export function resolveSafePath(baseDir: string, ...segments: string[]): string {
+  const resolved = resolve(baseDir, ...segments);
+  const normalizedBase = resolve(baseDir);
+  const prefix = normalizedBase.endsWith(sep) ? normalizedBase : normalizedBase + sep;
+  if (!resolved.startsWith(prefix) && resolved !== normalizedBase) {
+    throw new Error(`Path traversal blocked: ${resolved} escapes allowed directory ${baseDir}`);
+  }
+  return resolved;
+}
+
 export function normalizePageId(filePath: string): string {
   return filePath
     .replace(/\.md$/, "")
@@ -42,7 +56,7 @@ export function normalizePageId(filePath: string): string {
 }
 
 export function getPagePath(projectDir: string, pageId: string): string {
-  return join(getPagesDir(projectDir), `${pageId}.md`);
+  return resolveSafePath(projectDir, MEMORY_DIR_NAME, WIKI_DIR_NAME, PAGES_DIR_NAME, `${pageId}.md`);
 }
 
 import { readdirSync, statSync } from "node:fs";
@@ -88,6 +102,5 @@ export function writeText(filePath: string, content: string): void {
 }
 
 export function resolveRelativeTo(projectDir: string, filePath: string): string {
-  if (resolve(filePath) === filePath) return filePath;
-  return resolve(projectDir, filePath);
+  return resolveSafePath(projectDir, filePath);
 }

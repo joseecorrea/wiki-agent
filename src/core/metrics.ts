@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { MetricsData, MetricEvent, SearchResult } from "./types.js";
-import { getIndexDir, listPageFiles } from "./utils.js";
+import { getIndexDir, listPageFiles, resolveSafePath } from "./utils.js";
 import { writeFileAtomic } from "./atomic-write.js";
 import { withFileLock } from "./lock.js";
 import { estimateTokens, estimateFileTokens } from "./token-estimator.js";
@@ -113,7 +113,7 @@ export function estimateSearchTokensSaved(
 ): number {
   let fullTokens = 0;
   for (const r of results) {
-    const pagePath = join(projectDir, r.path);
+    const pagePath = resolveSafePath(projectDir, r.path);
     fullTokens += estimateFileTokens(pagePath);
   }
   const excerptText = results.map((r) => r.excerpt).join("\n");
