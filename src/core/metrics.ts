@@ -1,9 +1,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { MetricsData, MetricEvent } from "./types.js";
-import { getIndexDir } from "./utils.js";
+import type { MetricsData, MetricEvent, SearchResult } from "./types.js";
+import { getIndexDir, listPageFiles } from "./utils.js";
 import { writeFileAtomic } from "./atomic-write.js";
 import { withFileLock } from "./lock.js";
+import { estimateTokens, estimateFileTokens } from "./token-estimator.js";
 
 const METRICS_FILE_NAME = "metrics.json";
 const MAX_RECENT_EVENTS = 50;
@@ -106,10 +107,6 @@ export function getMetrics(projectDir: string): MetricsData {
  * Estimate tokens saved for a search operation.
  * Conservatively: total tokens of full page contents found minus tokens of excerpts returned.
  */
-import { estimateTokens, estimateFileTokens } from "./token-estimator.js";
-import { join } from "node:path";
-import type { SearchResult } from "./types.js";
-
 export function estimateSearchTokensSaved(
   projectDir: string,
   results: SearchResult[],
@@ -129,8 +126,6 @@ export function estimateSearchTokensSaved(
  * Estimate tokens saved for a status/lint/judge operation.
  * Conservatively: total tokens of the entire wiki minus tokens of the structured response.
  */
-import { listPageFiles } from "./utils.js";
-
 export function estimateWikiTokensSaved(
   projectDir: string,
   responseText: string,
