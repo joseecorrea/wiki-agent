@@ -7,6 +7,7 @@ import { statusCommand } from "./commands/status.js";
 import { searchCommand } from "./commands/search.js";
 import { indexCommand } from "./commands/index-cmd.js";
 import { updateCommand } from "./commands/update.js";
+import { statsCommand } from "./commands/stats.js";
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -61,6 +62,10 @@ async function main() {
       await indexCommand(projectDir);
       break;
     }
+    case "stats": {
+      await statsCommand(projectDir);
+      break;
+    }
     case "add-harness": {
       const harness = positionals[1];
       await addHarnessCommand(projectDir, harness);
@@ -87,6 +92,7 @@ Usage:
   wiki-agent add-harness <harness>    Add sub-agents for a specific harness
   wiki-agent remove [options]         Remove all wiki-agent data from project
   wiki-agent status [options]         Show wiki status
+  wiki-agent stats [options]          Show token savings metrics
   wiki-agent search <query> [opts]    Search the wiki
   wiki-agent index [options]          Build/rebuild the search index
 

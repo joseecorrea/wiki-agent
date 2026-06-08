@@ -10,7 +10,7 @@ The key innovation is **auto-learning**: as the agent works on your project, it 
 
 It works by delegating wiki operations to **specialized sub-agents** that have their own isolated context, keeping your main agent's context clean and reducing token consumption by ~80%.
 
-Additionally, **7 MCP tools** provide programmatic access for search, status, linting, and conflict detection via any MCP-compatible agent.
+Additionally, **8 MCP tools** provide programmatic access for search, status, linting, conflict detection, and token savings metrics via any MCP-compatible agent.
 
 ## Sub-agents
 
@@ -33,6 +33,7 @@ Additionally, **7 MCP tools** provide programmatic access for search, status, li
 | `wiki_lint` | Health-check for orphans, stale content, missing links |
 | `wiki_judge` | Detect potential conflicts between pages |
 | `wiki_status` | Wiki state overview (page count, types, index status) |
+| `wiki_stats` | Token savings metrics: total saved, by tool, recent events |
 
 ## Quick start
 
@@ -102,6 +103,9 @@ wiki-agent remove --force [--dir <path>]
 # Show wiki status
 wiki-agent status [--dir <path>]
 
+# Show token savings metrics
+wiki-agent stats [--dir <path>]
+
 # Search the wiki (BM25)
 wiki-agent search <query> [--type <type>] [--confidence <level>] [--tags <t1,t2>]
 
@@ -161,6 +165,24 @@ Agent needs context about auth
 ```
 
 Or uses `wiki_search` MCP tool for targeted BM25 queries.
+
+### Token Savings Metrics
+
+Wiki-Agent automatically tracks estimated tokens saved by using the wiki instead of direct file reads. Every MCP tool invocation and CLI command records a conservative estimate based on `characters / 4` (a universal heuristic compatible with most LLM tokenizers).
+
+- **Search**: tokens of full matching pages minus tokens of returned excerpts
+- **Status/Lint/Judge**: tokens of the entire wiki minus tokens of the structured response
+- **Ingest/Update/Auto-learn**: tokens of the input the main agent didn't have to process
+
+View your savings anytime:
+
+```bash
+wiki-agent stats
+```
+
+Or via MCP: `wiki_stats` returns total saved, operations count, breakdown by tool, and recent events.
+
+Metrics are stored in `memory/.wiki-agent/metrics.json` (safe for git tracking) with atomic writes and file locks to handle concurrent sub-agents.
 
 ### Auto-learning
 

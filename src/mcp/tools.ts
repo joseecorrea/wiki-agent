@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { handleSearch, handleIngest, handleUpdate, handleAutoLearn, handleLint, handleJudge, handleStatus } from "./handlers.js";
+import { handleSearch, handleIngest, handleUpdate, handleAutoLearn, handleLint, handleJudge, handleStatus, handleStats } from "./handlers.js";
 
 export function registerTools(server: McpServer): void {
   server.tool(
@@ -63,5 +63,12 @@ export function registerTools(server: McpServer): void {
     "Get the current status of the wiki: page count, types, index status, and recent activity.",
     {},
     handleStatus,
+  );
+
+  server.tool(
+    "wiki_stats",
+    "Get token savings metrics: total tokens saved, operations count, and breakdown by tool. Shows the value provided by the wiki-agent system.",
+    {},
+    handleStats,
   );
 }

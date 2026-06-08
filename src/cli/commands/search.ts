@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import * as clack from "@clack/prompts";
 import { searchWiki } from "../../core/wiki-ops.js";
+import { recordMetric, estimateSearchTokensSaved } from "../../core/metrics.js";
 
 export async function searchCommand(query: string, dir?: string, options?: { type?: string; confidence?: string; tags?: string[] }): Promise<void> {
   const projectDir = dir ? resolve(dir) : process.cwd();
@@ -10,6 +11,11 @@ export async function searchCommand(query: string, dir?: string, options?: { typ
   if (results.length === 0) {
     clack.log.warn("No results found.");
     return;
+  }
+
+  const saved = estimateSearchTokensSaved(projectDir, results);
+  if (saved > 0) {
+    recordMetric(projectDir, "wiki_search", query, saved);
   }
 
   clack.intro(`Search: "${query}"`);

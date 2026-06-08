@@ -86,3 +86,24 @@ export interface InitOptions {
   projectDir: string;
   harnesses: Harness[];
 }
+
+export interface ToolMetric {
+  count: number;
+  tokensSaved: number;
+}
+
+export interface MetricEvent {
+  tool: string;
+  detail: string;
+  saved: number;
+  timestamp: string;
+}
+
+export interface MetricsData {
+  version: number;
+  totalTokensSaved: number;
+  totalOperations: number;
+  byTool: Record<string, ToolMetric>;
+  recentEvents: MetricEvent[];
+  lastUpdated: string;
+}
