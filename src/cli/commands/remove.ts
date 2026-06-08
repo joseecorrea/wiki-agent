@@ -6,6 +6,7 @@ import { getAllHarnesses } from "../../shared/detectors.js";
 import { WIKI_AGENTS } from "../../shared/generators/common.js";
 import { withFileLock } from "../../core/lock.js";
 import { writeFileAtomic } from "../../core/atomic-write.js";
+import { VERSION } from "../../shared/version.js";
 
 interface RemovalItem {
   type: "dir" | "file" | "section" | "json-keys";
@@ -220,7 +221,7 @@ function removeRawIfEmpty(projectDir: string): void {
 }
 
 export async function removeCommand(projectDir: string, force = false): Promise<void> {
-  clack.intro("Wiki-Agent v0.3.0");
+  clack.intro(`Wiki-Agent v${VERSION}`);
 
   const items = collectItems(projectDir);
 

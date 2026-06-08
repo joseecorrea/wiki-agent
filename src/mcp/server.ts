@@ -2,10 +2,11 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { registerTools } from "./tools.js";
+import { VERSION } from "../shared/version.js";
 
 const server = new McpServer({
   name: "wiki-agent",
-  version: "0.3.0",
+  version: VERSION,
 });
 
 registerTools(server);

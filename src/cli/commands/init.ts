@@ -5,6 +5,7 @@ import { generateSubagentsForHarness } from "../../shared/generators/index.js";
 import { createWikiStructure, createWikiSpec } from "../../shared/generators/common.js";
 import { TEMPLATES, WIKI_SPEC, WIKI_SECTION } from "../../shared/templates.js";
 import { needsMigration, hasMemoryWiki } from "../../core/migrate.js";
+import { VERSION } from "../../shared/version.js";
 import type { Harness } from "../../core/types.js";
 
 const HARNESS_LABELS: Record<Harness, string> = {
@@ -15,7 +16,7 @@ const HARNESS_LABELS: Record<Harness, string> = {
 };
 
 export async function initCommand(projectDir: string, harnessFlag?: string): Promise<void> {
-  clack.intro("Wiki-Agent v0.3.0");
+  clack.intro(`Wiki-Agent v${VERSION}`);
 
   // Check for existing wiki
   if (hasMemoryWiki(projectDir)) {

@@ -5,6 +5,7 @@ import { getAllHarnesses } from "../../shared/detectors.js";
 import { generateSubagentsForHarness } from "../../shared/generators/index.js";
 import { TEMPLATES, WIKI_SECTION } from "../../shared/templates.js";
 import { getWikiDir } from "../../core/utils.js";
+import { VERSION } from "../../shared/version.js";
 import type { Harness } from "../../core/types.js";
 
 const HARNESS_LABELS: Record<Harness, string> = {
@@ -15,7 +16,7 @@ const HARNESS_LABELS: Record<Harness, string> = {
 };
 
 export async function addHarnessCommand(projectDir: string, harnessArg?: string): Promise<void> {
-  clack.intro("Wiki-Agent v0.3.0");
+  clack.intro(`Wiki-Agent v${VERSION}`);
 
   if (!existsSync(getWikiDir(projectDir))) {
     clack.log.error("No wiki found. Run 'wiki-agent init' first.");
