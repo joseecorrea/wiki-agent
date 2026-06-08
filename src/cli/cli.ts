@@ -6,6 +6,7 @@ import { removeCommand } from "./commands/remove.js";
 import { statusCommand } from "./commands/status.js";
 import { searchCommand } from "./commands/search.js";
 import { indexCommand } from "./commands/index-cmd.js";
+import { updateCommand } from "./commands/update.js";
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -33,6 +34,10 @@ async function main() {
   switch (command) {
     case "init": {
       await initCommand(projectDir, values.harness as string | undefined);
+      break;
+    }
+    case "update": {
+      await updateCommand(projectDir, values.force as boolean | undefined);
       break;
     }
     case "status": {
@@ -78,6 +83,7 @@ wiki-agent - Persistent memory wiki for LLM agents
 
 Usage:
   wiki-agent init [options]           Initialize wiki in a project
+  wiki-agent update [options]           Migrate legacy wiki to memory/ structure
   wiki-agent add-harness <harness>    Add sub-agents for a specific harness
   wiki-agent remove [options]         Remove all wiki-agent data from project
   wiki-agent status [options]         Show wiki status
@@ -90,7 +96,7 @@ Options:
   --type <type>       Filter by page type (search)
   --confidence <lvl>  Filter by confidence (search)
   --tags <t1,t2>      Filter by tags (search)
-  -f, --force         Skip confirmation prompts (remove)
+  -f, --force         Skip confirmation prompts (remove, update)
   -h, --help          Show this help message
 
 Supported harnesses:

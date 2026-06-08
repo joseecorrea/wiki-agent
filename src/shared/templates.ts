@@ -21,7 +21,7 @@ You have access to the following MCP tools:
 1. Use the **wiki_search** tool with the query to find relevant pages
 2. If needed, refine the search with type/confidence/tag filters
 3. Read the most relevant pages identified by the search
-4. If the search yields poor results, fall back to reading \`wiki/index.md\` then targeting specific pages
+4. If the search yields poor results, fall back to reading \`memory/wiki/index.md\` then targeting specific pages
 5. Synthesize a concise answer that captures the key facts
 
 ## Output Format
@@ -61,18 +61,18 @@ You have access to the following MCP tools:
 
 ## Process
 
-1. Read the source document (from \`raw/\` directory)
-2. Read \`wiki/index.md\` to understand current wiki structure
-3. Read \`wiki/overview.md\` to understand current synthesis
+1. Read the source document (from \`memory/raw/\` directory)
+2. Read \`memory/wiki/index.md\` to understand current wiki structure
+3. Read \`memory/wiki/overview.md\` to understand current synthesis
 4. Use **wiki_search** to check if any of the source content overlaps with existing pages
 5. Read relevant existing pages that relate to the source content
 6. Extract key information: entities, concepts, decisions, conventions, patterns
-7. Create new pages in \`wiki/pages/\` for significant new topics
+7. Create new pages in \`memory/wiki/pages/\` for significant new topics
 8. Update existing pages with new information from the source
 9. Update cross-references between pages using \`[[wiki-links]]\`
-10. Update \`wiki/index.md\` with all new and modified entries
-11. Append an entry to \`wiki/log.md\` following the format: \`## [YYYY-MM-DD] ingest | Source Title\`
-12. Update \`wiki/overview.md\` if the source changes the big picture
+10. Update \`memory/wiki/index.md\` with all new and modified entries
+11. Append an entry to \`memory/wiki/log.md\` following the format: \`## [YYYY-MM-DD] ingest | Source Title\`
+12. Update \`memory/wiki/overview.md\` if the source changes the big picture
 
 ## Page Format
 
@@ -83,7 +83,7 @@ title: Page Title
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 tags: [tag1, tag2]
-sources: [raw/source-file.md]
+sources: [memory/raw/source-file.md]
 type: architecture | decision | pattern | gotcha | entity | concept
 confidence: high | medium | low
 related:
@@ -106,7 +106,7 @@ related:
 
 ## Rules
 
-- **NEVER** modify files in \`raw/\` — sources are immutable
+- **NEVER** modify files in \`memory/raw/\` — sources are immutable
 - **ALWAYS** use \`[[wiki-links]]\` for cross-references between pages
 - **ALWAYS** include type and confidence in frontmatter
 - **ALWAYS** update the index when creating or modifying pages
@@ -137,14 +137,14 @@ You have access to the following MCP tools:
 ## Process
 
 1. Read the target page(s) specified in the request
-2. Read \`wiki/index.md\` to understand the broader context
+2. Read \`memory/wiki/index.md\` to understand the broader context
 3. Use **wiki_search** to find pages that might need cross-reference updates
 4. Read any related pages that might need cross-reference updates
 5. Integrate the new information into the target page(s)
 6. Update the \`updated\` date in frontmatter
 7. Add or update \`[[wiki-links]]\` cross-references in related pages
-8. Update \`wiki/index.md\` if new pages were created or descriptions need updating
-9. Append an entry to \`wiki/log.md\` following the format: \`## [YYYY-MM-DD] update | Brief description\`
+8. Update \`memory/wiki/index.md\` if new pages were created or descriptions need updating
+9. Append an entry to \`memory/wiki/log.md\` following the format: \`## [YYYY-MM-DD] update | Brief description\`
 
 ## Rules
 
@@ -178,14 +178,14 @@ You have access to the following MCP tools:
 
 1. Receive a list of key facts/patterns/decisions from the main agent
 2. Use **wiki_search** to check if each fact is already documented
-3. Read \`wiki/index.md\` to check what's already documented
+3. Read \`memory/wiki/index.md\` to check what's already documented
 4. For each fact:
    a. Check if it's already covered in an existing wiki page
    b. If NOT documented — determine if it warrants a new page or belongs in an existing one
    c. If partially documented — update the existing page with the missing information
 5. Create or update pages following the standard format with enriched frontmatter (type, confidence)
-6. Update \`wiki/index.md\` with new entries
-7. Append an entry to \`wiki/log.md\` following the format: \`## [YYYY-MM-DD] auto-learn | Brief description\`
+6. Update \`memory/wiki/index.md\` with new entries
+7. Append an entry to \`memory/wiki/log.md\` following the format: \`## [YYYY-MM-DD] auto-learn | Brief description\`
 8. Optionally run **wiki_lint** to verify wiki health
 
 ## What to Auto-Learn
@@ -240,7 +240,7 @@ You have access to the following MCP tools:
 1. Use **wiki_status** to get an overview of the wiki state
 2. Use **wiki_lint** to get an automated report of issues
 3. Use **wiki_judge** to check for potential conflicts between pages
-4. Read \`wiki/index.md\` to check completeness
+4. Read \`memory/wiki/index.md\` to check completeness
 5. Read pages flagged by the lint tool to verify issues
 6. Check for the following specific issues:
 
@@ -260,7 +260,7 @@ Pages with \`updated\` dates significantly older than related pages.
 Concepts or entities frequently mentioned across the wiki but without their own dedicated page.
 
 ### Index Completeness
-Pages that exist in \`wiki/pages/\` but aren't listed in \`wiki/index.md\`, or index entries pointing to non-existent pages.
+Pages that exist in \`memory/wiki/pages/\` but aren't listed in \`memory/wiki/index.md\`, or index entries pointing to non-existent pages.
 
 ## Output Format
 
@@ -274,7 +274,7 @@ If there are significant issues or gaps:
 
 ## Rules
 
-- **ALWAYS** append to \`wiki/log.md\` with \`## [YYYY-MM-DD] lint | Summary\`
+- **ALWAYS** append to \`memory/wiki/log.md\` with \`## [YYYY-MM-DD] lint | Summary\`
 - Fix minor issues directly (typos, missing links, index entries)
 - Flag major issues (contradictions, significant gaps) but don't create major new content without approval
 - **NEVER** delete pages — only flag them as potentially stale or redundant
@@ -284,71 +284,28 @@ If there are significant issues or gaps:
 
 export const WIKI_SECTION = `## Wiki-Agent: Persistent Memory
 
-This project uses Wiki-Agent for persistent knowledge management via sub-agent orchestration with BM25-powered search.
-
-### Rules
-
-- **NEVER read wiki files directly** — always delegate to the appropriate wiki sub-agent or use MCP tools
-- **NEVER modify wiki files directly** — always delegate to the appropriate wiki sub-agent
-- Wiki sub-agents return condensed summaries (~500 words max), keeping your context clean
+This project uses Wiki-Agent for persistent knowledge. Always delegate to wiki sub-agents — never read or modify wiki files directly.
 
 ### When to Delegate
 
 | Situation | Delegate to |
 |---|---|
-| You need project context, architecture details, or conventions | \`wiki-search\` |
-| User provides a source document to process | \`wiki-ingest\` |
-| You need to update specific wiki pages | \`wiki-update\` |
-| You discovered undocumented information (conventions, patterns, decisions) | \`wiki-auto-learn\` |
-| Wiki needs health-check or maintenance | \`wiki-lint\` |
-
-### MCP Tools Available
-
-For programmatic access, the following MCP tools are available:
-- \`wiki_search\` — BM25 search with type/confidence/tag filters
-- \`wiki_ingest\` — Ingest source documents
-- \`wiki_update\` — Update wiki pages
-- \`wiki_auto_learn\` — Auto-learn undocumented knowledge
-- \`wiki_lint\` — Health-check the wiki
-- \`wiki_judge\` — Detect potential conflicts between pages
-- \`wiki_status\` — Wiki state overview
+| Need project context, architecture, or conventions | \`wiki-search\` |
+| User provides a source document | \`wiki-ingest\` |
+| Update specific wiki pages | \`wiki-update\` |
+| Discover undocumented knowledge (patterns, decisions, APIs, configs, gotchas) | \`wiki-auto-learn\` |
+| Wiki health-check or maintenance | \`wiki-lint\` |
 
 ### Auto-Learning Triggers
 
 Delegate to \`wiki-auto-learn\` when you discover:
+- Undocumented conventions or patterns
+- Architecture decisions not in the wiki
+- Solutions to bugs or errors worth preserving
+- APIs, configs, or patterns not documented
+- Project-specific gotchas or implicit rules
 
-- Undocumented conventions or patterns in the codebase
-- Architecture decisions not recorded in the wiki
-- Solutions to errors or bugs worth preserving
-- APIs, configs, or patterns that aren't documented
-- Implicit rules the team follows but hasn't written down
-- Project-specific gotchas or pitfalls
-
-### Session Start
-
-At the start of each session, delegate to \`wiki-search\` with a query about the current project state. This loads relevant context without consuming your main context window.
-
-### Session End
-
-Before ending a significant session, consider delegating to \`wiki-lint\` to ensure the wiki stays healthy, or to \`wiki-auto-learn\` if you accumulated undocumented knowledge during the session.
-
-### Wiki Structure
-
-\`\`\`
-wiki/
-├── index.md      — Catalog of all wiki content
-├── log.md        — Chronological activity log
-├── overview.md   — Evolving project synthesis
-└── pages/        — Individual topic pages (flat or categorized by the agent)
-\`\`\`
-
-### Page Metadata (Frontmatter)
-
-Every wiki page includes enriched frontmatter:
-- **type**: architecture | decision | pattern | gotcha | entity | concept
-- **confidence**: high | medium | low
-- **tags**: Array of topic tags for search and organization
-- **related**: List of \`[[wiki-links]]\` to related pages
+For full spec, see \`memory/wiki-spec.md\`.
 `;
 
 export const WIKI_SPEC = `# Wiki-Agent Specification
@@ -365,8 +322,8 @@ The key innovation is **auto-learning**: as the agent works, it detects undocume
 
 ### Three Layers
 
-1. **Raw sources** — Immutable source documents in \`raw/\`. The agent reads but never modifies these.
-2. **The wiki** — A directory of agent-generated markdown files in \`wiki/\`. Summaries, entity pages, concept pages, comparisons, an evolving synthesis. The agent owns this layer entirely.
+1. **Raw sources** — Immutable source documents in \`memory/raw/\`. The agent reads but never modifies these.
+2. **The wiki** — A directory of agent-generated markdown files in \`memory/wiki/\`. Summaries, entity pages, concept pages, comparisons, an evolving synthesis. The agent owns this layer entirely.
 3. **The schema** — Instructions (AGENTS.md, CLAUDE.md, etc.) that tell the agent how the wiki is structured, what conventions to follow, and what workflows to execute.
 
 ### Dual Interface
@@ -409,25 +366,28 @@ Wiki-Agent provides two complementary interfaces for interacting with the wiki:
 
 \`\`\`
 project-root/
-├── .wiki-agent/
-│   └── index.json      # BM25 search index (tracked in git)
-├── wiki/
-│   ├── index.md          # Catalog of all wiki content
-│   ├── log.md            # Chronological append-only log
-│   ├── overview.md       # Evolving synthesis of the project
-│   └── pages/            # Agent creates pages here
-│       ├── auth.md
-│       ├── rate-limiting.md
-│       └── architecture/
-│           └── api-design.md
-├── raw/
-│   └── assets/           # Immutable source documents
-└── AGENTS.md             # (or CLAUDE.md, etc.) — schema with wiki orchestration rules
+└── memory/
+    ├── .wiki-agent/
+    │   └── index.json      # BM25 search index (tracked in git)
+    ├── wiki/
+    │   ├── index.md          # Catalog of all wiki content
+    │   ├── log.md            # Chronological append-only log
+    │   ├── overview.md       # Evolving synthesis of the project
+    │   └── pages/            # Agent creates pages here
+    │       ├── auth.md
+    │       ├── rate-limiting.md
+    │       └── architecture/
+    │           └── api-design.md
+    ├── raw/
+    │   └── assets/           # Immutable source documents
+    └── wiki-spec.md          # Framework-agnostic specification
+
+AGENTS.md (or CLAUDE.md, etc.) — schema with wiki orchestration rules (project root)
 \`\`\`
 
 ## Wiki File Formats
 
-### Page template (wiki/pages/*.md)
+### Page template (memory/wiki/pages/*.md)
 
 \`\`\`markdown
 ---
@@ -435,7 +395,7 @@ title: Page Title
 created: 2026-01-15
 updated: 2026-01-16
 tags: [tag1, tag2]
-sources: [raw/source-file.md]
+sources: [memory/raw/source-file.md]
 type: architecture | decision | pattern | gotcha | entity | concept
 confidence: high | medium | low
 related:
@@ -481,28 +441,28 @@ related:
 5. Return summary to the main agent — **never** return raw wiki content
 
 ### Ingest (wiki-ingest)
-1. Read the source document from \`raw/\`
+1. Read the source document from \`memory/raw/\`
 2. Use \`wiki_search\` to check for overlap with existing pages
-3. Create summary page(s) in \`wiki/pages/\` with enriched frontmatter
+3. Create summary page(s) in \`memory/wiki/pages/\` with enriched frontmatter
 4. Update entity and concept pages across the wiki
-5. Update \`wiki/index.md\` with new entries
-6. Append entry to \`wiki/log.md\`
-7. Update \`wiki/overview.md\` if the source changes the big picture
+5. Update \`memory/wiki/index.md\` with new entries
+6. Append entry to \`memory/wiki/log.md\`
+7. Update \`memory/wiki/overview.md\` if the source changes the big picture
 8. Return a concise list of created/updated pages
 
 ### Update (wiki-update)
 1. Read the specified pages
 2. Integrate the new information
 3. Update cross-references in related pages
-4. Update \`wiki/index.md\` if new pages were created
-5. Append entry to \`wiki/log.md\`
+4. Update \`memory/wiki/index.md\` if new pages were created
+5. Append entry to \`memory/wiki/log.md\`
 6. Return confirmation of changes
 
 ### Auto-Learn (wiki-auto-learn)
 1. Receive key facts from the main agent's session
 2. Use \`wiki_search\` to check if each fact is already documented
 3. For undocumented facts — create new pages or update existing ones
-4. Update \`wiki/index.md\` and \`wiki/log.md\`
+4. Update \`memory/wiki/index.md\` and \`memory/wiki/log.md\`
 5. Optionally run \`wiki_lint\` to verify wiki health
 6. Return what was learned/added
 
@@ -515,7 +475,7 @@ related:
 
 ## Search Index
 
-The \`.wiki-agent/index.json\` file contains a BM25 inverted index built from all wiki pages. It is tracked in git and automatically rebuilt when stale.
+The \`memory/.wiki-agent/index.json\` file contains a BM25 inverted index built from all wiki pages. It is tracked in git and automatically rebuilt when stale.
 
 - **Built by**: \`wiki-agent index\` CLI command or automatically when searching
 - **Format**: JSON with inverted index entries, page metadata, and BM25 statistics

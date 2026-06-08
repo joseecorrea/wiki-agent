@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, rmdirSync, statSync, unlinkSync } from "node:fs"
 import { dirname, join, resolve } from "node:path";
 import { createHash } from "node:crypto";
 
-const LOCK_DIR_NAME = ".wiki-agent/locks";
+const LOCK_DIR_NAME = "memory/.wiki-agent/locks";
 const STALE_LOCK_MS = 30_000; // 30 seconds
 const DEFAULT_TIMEOUT_MS = 10_000; // 10 seconds
 const RETRY_BASE_MS = 50;
@@ -27,7 +27,15 @@ export function findProjectDir(filePath: string): string {
   let dir = dirname(resolve(filePath));
   const root = resolve("/");
   while (dir !== root) {
+    // Check new memory/ structure first
+    if (existsSync(join(dir, "memory", ".wiki-agent")) || existsSync(join(dir, "memory", "wiki"))) {
+      return dir;
+    }
+    // Fallback to legacy root-level structure
     if (existsSync(join(dir, ".wiki-agent")) || existsSync(join(dir, "wiki"))) {
+      console.warn(
+        `[wiki-agent] Using legacy wiki structure at project root. Run 'wiki-agent update' to migrate to memory/.`,
+      );
       return dir;
     }
     const parent = dirname(dir);
@@ -35,7 +43,7 @@ export function findProjectDir(filePath: string): string {
     dir = parent;
   }
   throw new Error(
-    `Could not find project root for ${filePath}. Missing .wiki-agent or wiki/ directory.`,
+    `Could not find project root for ${filePath}. Missing memory/.wiki-agent, memory/wiki, .wiki-agent, or wiki/ directory.`,
   );
 }
 

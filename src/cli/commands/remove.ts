@@ -24,7 +24,7 @@ function isDirEmpty(dirPath: string): boolean {
   return items.length === 0;
 }
 
-export function collectItems(projectDir: string): RemovalItem[] {
+function collectLegacyItems(projectDir: string): RemovalItem[] {
   const items: RemovalItem[] = [];
 
   // 1. Wiki directories
@@ -48,6 +48,55 @@ export function collectItems(projectDir: string): RemovalItem[] {
   const specPath = join(projectDir, "wiki-spec.md");
   if (existsSync(specPath)) {
     items.push({ type: "file", path: specPath, description: "Framework-agnostic wiki specification" });
+  }
+
+  return items;
+}
+
+function collectMemoryItems(projectDir: string): RemovalItem[] {
+  const items: RemovalItem[] = [];
+  const memoryDir = join(projectDir, "memory");
+
+  // 1. Wiki directories
+  const wikiDir = join(memoryDir, "wiki");
+  if (existsSync(wikiDir)) {
+    items.push({ type: "dir", path: wikiDir, description: "Wiki directory (agent-generated pages)" });
+  }
+
+  const wikiAgentDir = join(memoryDir, ".wiki-agent");
+  if (existsSync(wikiAgentDir)) {
+    items.push({ type: "dir", path: wikiAgentDir, description: "BM25 search index directory" });
+  }
+
+  // 2. Raw assets
+  const rawAssetsDir = join(memoryDir, "raw", "assets");
+  if (existsSync(rawAssetsDir)) {
+    items.push({ type: "dir", path: rawAssetsDir, description: "Raw assets directory (created by wiki-agent)" });
+  }
+
+  // 3. wiki-spec.md
+  const specPath = join(memoryDir, "wiki-spec.md");
+  if (existsSync(specPath)) {
+    items.push({ type: "file", path: specPath, description: "Framework-agnostic wiki specification" });
+  }
+
+  return items;
+}
+
+export function collectItems(projectDir: string): RemovalItem[] {
+  const items: RemovalItem[] = [];
+
+  // Try new memory/ structure first
+  const memoryItems = collectMemoryItems(projectDir);
+  if (memoryItems.length > 0) {
+    items.push(...memoryItems);
+  } else {
+    // Fallback to legacy root-level structure
+    const legacyItems = collectLegacyItems(projectDir);
+    if (legacyItems.length > 0) {
+      console.warn("[wiki-agent] Using legacy wiki structure at project root. Run 'wiki-agent update' to migrate to memory/.");
+      items.push(...legacyItems);
+    }
   }
 
   // 4. Sub-agent files per harness
@@ -158,6 +207,12 @@ function removeAgentDirsIfEmpty(projectDir: string): void {
 }
 
 function removeRawIfEmpty(projectDir: string): void {
+  // Check memory/raw first, then legacy raw/
+  const memoryRawDir = join(projectDir, "memory", "raw");
+  if (existsSync(memoryRawDir) && isDirEmpty(memoryRawDir)) {
+    rmdirSync(memoryRawDir);
+  }
+
   const rawDir = join(projectDir, "raw");
   if (existsSync(rawDir) && isDirEmpty(rawDir)) {
     rmdirSync(rawDir);

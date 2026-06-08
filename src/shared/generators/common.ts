@@ -9,10 +9,10 @@ export const WIKI_AGENTS = [
   "wiki-lint",
 ] as const;
 
-export const WIKI_DIRS = ["wiki/pages", "raw/assets"];
+export const WIKI_DIRS = ["memory/wiki/pages", "memory/raw/assets"];
 
 export const WIKI_INITIAL_FILES: Record<string, string> = {
-  "wiki/index.md": `# Wiki Index
+  "memory/wiki/index.md": `# Wiki Index
 
 ## Entities
 <!-- List entity pages here as they are created -->
@@ -32,11 +32,11 @@ export const WIKI_INITIAL_FILES: Record<string, string> = {
 ## Sources
 <!-- List ingested sources here -->
 `,
-  "wiki/log.md": `# Wiki Log
+  "memory/wiki/log.md": `# Wiki Log
 
 <!-- Entries are appended chronologically. Format: ## [YYYY-MM-DD] operation | Title -->
 `,
-  "wiki/overview.md": `# Project Overview
+  "memory/wiki/overview.md": `# Project Overview
 
 <!-- This page is maintained by wiki-ingest and wiki-auto-learn. It captures the current synthesis of the project. -->
 
@@ -84,10 +84,10 @@ export function createWikiStructure(
     }
   }
 
-  const indexDir = join(projectDir, ".wiki-agent");
+  const indexDir = join(projectDir, "memory", ".wiki-agent");
   if (!existsSync(indexDir)) {
     mkdirSync(indexDir, { recursive: true });
-    actions.push("Created directory: .wiki-agent/");
+    actions.push("Created directory: memory/.wiki-agent/");
   }
 
   for (const [filePath, content] of Object.entries(WIKI_INITIAL_FILES)) {
@@ -139,11 +139,11 @@ export function createWikiSpec(
   wikiSpec: string,
   actions: string[],
 ): void {
-  const specDest = join(projectDir, "wiki-spec.md");
+  const specDest = join(projectDir, "memory", "wiki-spec.md");
   if (!existsSync(specDest)) {
     writeFileSync(specDest, wikiSpec, "utf-8");
-    actions.push("Created wiki-spec.md (framework-agnostic specification)");
+    actions.push("Created memory/wiki-spec.md (framework-agnostic specification)");
   } else {
-    actions.push("wiki-spec.md already exists, skipped");
+    actions.push("memory/wiki-spec.md already exists, skipped");
   }
 }

@@ -3,18 +3,23 @@ import { dirname, join, resolve } from "node:path";
 import { withFileLock } from "./lock.js";
 import { writeFileAtomic } from "./atomic-write.js";
 
+export const MEMORY_DIR_NAME = "memory";
 export const WIKI_DIR_NAME = "wiki";
 export const RAW_DIR_NAME = "raw";
 export const INDEX_DIR_NAME = ".wiki-agent";
 export const INDEX_FILE_NAME = "index.json";
 export const PAGES_DIR_NAME = "pages";
 
+export function getMemoryDir(projectDir: string): string {
+  return join(projectDir, MEMORY_DIR_NAME);
+}
+
 export function getWikiDir(projectDir: string): string {
-  return join(projectDir, WIKI_DIR_NAME);
+  return join(getMemoryDir(projectDir), WIKI_DIR_NAME);
 }
 
 export function getRawDir(projectDir: string): string {
-  return join(projectDir, RAW_DIR_NAME);
+  return join(getMemoryDir(projectDir), RAW_DIR_NAME);
 }
 
 export function getPagesDir(projectDir: string): string {
@@ -22,11 +27,11 @@ export function getPagesDir(projectDir: string): string {
 }
 
 export function getIndexPath(projectDir: string): string {
-  return join(projectDir, INDEX_DIR_NAME, INDEX_FILE_NAME);
+  return join(getMemoryDir(projectDir), INDEX_DIR_NAME, INDEX_FILE_NAME);
 }
 
 export function getIndexDir(projectDir: string): string {
-  return join(projectDir, INDEX_DIR_NAME);
+  return join(getMemoryDir(projectDir), INDEX_DIR_NAME);
 }
 
 export function normalizePageId(filePath: string): string {

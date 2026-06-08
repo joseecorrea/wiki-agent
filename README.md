@@ -66,18 +66,19 @@ your-project/
 │   ├── wiki-update.md
 │   ├── wiki-auto-learn.md
 │   └── wiki-lint.md
-├── .wiki-agent/
-│   └── index.json            # BM25 search index (tracked in git)
-├── wiki/
-│   ├── index.md              # Catalog of all wiki content
-│   ├── log.md                # Chronological activity log
-│   ├── overview.md           # Evolving project synthesis
-│   └── pages/                # Individual topic pages
-├── raw/
-│   └── assets/               # Immutable source documents
-├── AGENTS.md                 # Merged with wiki-agent orchestration rules
-├── <harness-config>          # e.g. opencode.json, CLAUDE.md, .cursorrules
-└── wiki-spec.md              # Framework-agnostic specification
+├── memory/
+│   ├── .wiki-agent/
+│   │   └── index.json            # BM25 search index (tracked in git)
+│   ├── wiki/
+│   │   ├── index.md              # Catalog of all wiki content
+│   │   ├── log.md                # Chronological activity log
+│   │   ├── overview.md           # Evolving project synthesis
+│   │   └── pages/                # Individual topic pages
+│   ├── raw/
+│   │   └── assets/               # Immutable source documents
+│   └── wiki-spec.md              # Framework-agnostic specification
+├── AGENTS.md                       # Merged with wiki-agent orchestration rules
+└── <harness-config>                # e.g. opencode.json, CLAUDE.md, .cursorrules
 ```
 
 ## CLI Commands
@@ -85,6 +86,9 @@ your-project/
 ```bash
 # Initialize wiki with interactive TUI
 wiki-agent init [--harness <type>] [--dir <path>]
+
+# Migrate legacy wiki (root-level) to memory/ structure
+wiki-agent update [--dir <path>]
 
 # Add sub-agents for a specific harness to an existing wiki
 wiki-agent add-harness <harness> [--dir <path>]
@@ -135,8 +139,8 @@ related:
 
 ### Three layers
 
-1. **Raw sources** (`raw/`) — Your immutable source documents. The agent reads but never modifies these.
-2. **The wiki** (`wiki/`) — Agent-generated markdown files. Summaries, entity pages, concept pages. The agent owns this layer entirely.
+1. **Raw sources** (`memory/raw/`) — Your immutable source documents. The agent reads but never modifies these.
+2. **The wiki** (`memory/wiki/`) — Agent-generated markdown files. Summaries, entity pages, concept pages. The agent owns this layer entirely.
 3. **The schema** (`AGENTS.md`) — Instructions that tell the agent how the wiki is structured and when to delegate to sub-agents.
 
 ### Dual interface: sub-agents + MCP tools
@@ -204,10 +208,10 @@ Same for `opencode.json`: agent definitions and MCP server config are merged in,
 
 ## Adding sources
 
-Drop documents into `raw/` and delegate to `wiki-ingest`:
+Drop documents into `memory/raw/` and delegate to `wiki-ingest`:
 
 ```
-User: "Process raw/architecture-notes.md"
+User: "Process memory/raw/architecture-notes.md"
 Agent → delegates to wiki-ingest
          → reads the source
          → creates/updates 5-15 wiki pages
@@ -235,11 +239,11 @@ wiki-agent remove
 
 This scans the project and shows a **preview** of everything that will be touched, then asks for confirmation. It only removes wiki-agent-created content:
 
-- `wiki/` — agent-generated wiki pages
-- `.wiki-agent/` — BM25 search index
-- `raw/assets/` — directory created by wiki-agent (only if empty afterward)
+- `memory/wiki/` — agent-generated wiki pages
+- `memory/.wiki-agent/` — BM25 search index
+- `memory/raw/assets/` — directory created by wiki-agent (only if empty afterward)
+- `memory/wiki-spec.md` — framework specification
 - `<harness>/agents/wiki-*.md` — sub-agent definition files
-- `wiki-spec.md` — framework specification
 - Instruction file sections — removes only the `<!-- WIKI-AGENT:START -->...<!-- WIKI-AGENT:END -->` blocks from `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, etc., preserving your existing content
 - `opencode.json` — removes only the `mcp.wiki-agent` and `agent.wiki-*` entries, leaving your other config intact
 

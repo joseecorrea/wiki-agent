@@ -4,6 +4,7 @@ import * as clack from "@clack/prompts";
 import { getAllHarnesses } from "../../shared/detectors.js";
 import { generateSubagentsForHarness } from "../../shared/generators/index.js";
 import { TEMPLATES, WIKI_SECTION } from "../../shared/templates.js";
+import { getWikiDir } from "../../core/utils.js";
 import type { Harness } from "../../core/types.js";
 
 const HARNESS_LABELS: Record<Harness, string> = {
@@ -16,7 +17,7 @@ const HARNESS_LABELS: Record<Harness, string> = {
 export async function addHarnessCommand(projectDir: string, harnessArg?: string): Promise<void> {
   clack.intro("Wiki-Agent v0.3.0");
 
-  if (!existsSync(join(projectDir, "wiki"))) {
+  if (!existsSync(getWikiDir(projectDir))) {
     clack.log.error("No wiki found. Run 'wiki-agent init' first.");
     process.exit(1);
   }
@@ -71,5 +72,5 @@ export async function addHarnessCommand(projectDir: string, harnessArg?: string)
     clack.log.warn(warning);
   }
 
-  clack.outro("Wiki sub-agents added for " + HARNESS_LABELS[selectedHarness] + "!\n\n  Wiki: " + resolve(projectDir, "wiki") + "\n\n  Try: @wiki-search \"how does auth work?\"");
+  clack.outro("Wiki sub-agents added for " + HARNESS_LABELS[selectedHarness] + "!\n\n  Wiki: " + resolve(projectDir, "memory/wiki") + "\n\n  Try: @wiki-search \"how does auth work?\"");
 }

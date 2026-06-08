@@ -4,6 +4,7 @@ import { detectHarnesses, getAllHarnesses } from "../../shared/detectors.js";
 import { generateSubagentsForHarness } from "../../shared/generators/index.js";
 import { createWikiStructure, createWikiSpec } from "../../shared/generators/common.js";
 import { TEMPLATES, WIKI_SPEC, WIKI_SECTION } from "../../shared/templates.js";
+import { needsMigration, hasMemoryWiki } from "../../core/migrate.js";
 import type { Harness } from "../../core/types.js";
 
 const HARNESS_LABELS: Record<Harness, string> = {
@@ -16,22 +17,22 @@ const HARNESS_LABELS: Record<Harness, string> = {
 export async function initCommand(projectDir: string, harnessFlag?: string): Promise<void> {
   clack.intro("Wiki-Agent v0.3.0");
 
+  // Check for existing wiki
+  if (hasMemoryWiki(projectDir)) {
+    clack.outro("Wiki already initialized.\n\n  Wiki: " + resolve(projectDir, "memory/wiki") + "\n\n  Use 'wiki-agent update' to migrate legacy structures, or 'wiki-agent add-harness' to add sub-agents.");
+    return;
+  }
+
+  if (needsMigration(projectDir)) {
+    clack.outro("Legacy wiki structure detected at project root.\n\n  Run 'wiki-agent update' to migrate into memory/.");
+    process.exit(1);
+  }
+
   const s = clack.spinner();
   s.start("Scanning project for agent harnesses...");
 
   const detected = detectHarnesses(projectDir);
   s.stop(detected.length > 0 ? detected.map((h) => HARNESS_LABELS[h]).join(", ") + " detected" : "No harness detected");
-
-  const wikiPath = await clack.text({
-    message: "Where should the wiki be created?",
-    placeholder: "./wiki",
-    defaultValue: "./wiki",
-  });
-
-  if (clack.isCancel(wikiPath)) {
-    clack.cancel("Cancelled");
-    process.exit(0);
-  }
 
   // Step 1: Create base wiki structure (common to all harnesses)
   s.start("Creating wiki structure...");

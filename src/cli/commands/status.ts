@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import * as clack from "@clack/prompts";
 import { getWikiStatus } from "../../core/wiki-ops.js";
+import { getWikiDir, hasMemoryWiki } from "../../core/migrate.js";
 
 export async function statusCommand(dir?: string): Promise<void> {
   const projectDir = dir ? resolve(dir) : process.cwd();
@@ -20,7 +21,15 @@ export async function statusCommand(dir?: string): Promise<void> {
     : "not built";
   const indexStatus = status.indexStale ? staleMsg : upToDateMsg;
 
-  clack.log.info("Wiki: " + resolve(projectDir, "wiki"));
+  const wikiPath = hasMemoryWiki(projectDir)
+    ? resolve(projectDir, "memory/wiki")
+    : resolve(projectDir, "wiki");
+
+  if (!hasMemoryWiki(projectDir)) {
+    console.warn("[wiki-agent] Using legacy wiki structure at project root. Run 'wiki-agent update' to migrate to memory/.");
+  }
+
+  clack.log.info("Wiki: " + wikiPath);
   clack.log.info("Index: " + indexStatus);
   clack.log.info("Pages: " + String(status.totalPages));
 
