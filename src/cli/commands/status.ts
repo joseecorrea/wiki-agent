@@ -1,7 +1,8 @@
 import { resolve } from "node:path";
 import * as clack from "@clack/prompts";
 import { getWikiStatus } from "../../core/wiki-ops.js";
-import { getWikiDir, hasMemoryWiki } from "../../core/migrate.js";
+import { hasMemoryWiki } from "../../core/migrate.js";
+import { getWikiDir } from "../../core/utils.js";
 import { recordMetric, estimateWikiTokensSaved } from "../../core/metrics.js";
 
 export async function statusCommand(dir?: string): Promise<void> {

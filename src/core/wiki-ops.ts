@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { buildIndex, saveIndex, loadIndex, isIndexStale } from "./index-builder.js";
+import { buildIndex, saveIndex, loadIndex, isIndexStale, updateIndex } from "./index-builder.js";
 import { search as bm25Search, getPageExcerpt } from "./search.js";
 import { findPotentialConflicts } from "./judge.js";
 import { parsePage, extractWikiLinks } from "./markdown.js";
@@ -18,7 +18,7 @@ export function searchWiki(projectDir: string, query: string, options?: { type?:
       if (current && !isIndexStale(projectDir, current)) {
         return current;
       }
-      const fresh = buildIndex(projectDir);
+      const fresh = current ? updateIndex(projectDir, current) : buildIndex(projectDir);
       saveIndex(projectDir, fresh);
       return fresh;
     });
@@ -41,6 +41,24 @@ export function buildAndSaveIndex(projectDir: string): number {
     const index = buildIndex(projectDir);
     saveIndex(projectDir, index);
     return index.stats.totalPages;
+  });
+}
+
+export function updateAndSaveIndex(projectDir: string): { totalPages: number; changed: boolean } {
+  return withIndexLock(projectDir, () => {
+    const current = loadIndex(projectDir);
+    const beforeFileCount = current ? Object.keys(current.fileStates).length : 0;
+    const index = current && !isIndexStale(projectDir, current)
+      ? current
+      : (current ? updateIndex(projectDir, current) : buildIndex(projectDir));
+    const changed = index !== current || Object.keys(index.fileStates).length !== beforeFileCount;
+    if (index !== current) {
+      saveIndex(projectDir, index);
+    }
+    return {
+      totalPages: index.stats.totalPages,
+      changed,
+    };
   });
 }
 
@@ -119,8 +137,19 @@ export function lintWiki(projectDir: string): LintReport {
   }
 
   let potentialConflicts: ConflictPair[] = [];
-  const index = loadIndex(projectDir);
-  if (index && !isIndexStale(projectDir, index)) {
+  let index = loadIndex(projectDir);
+  if (index && isIndexStale(projectDir, index)) {
+    index = withIndexLock(projectDir, () => {
+      const current = loadIndex(projectDir);
+      if (current && !isIndexStale(projectDir, current)) {
+        return current;
+      }
+      const fresh = current ? updateIndex(projectDir, current) : buildIndex(projectDir);
+      saveIndex(projectDir, fresh);
+      return fresh;
+    });
+  }
+  if (index) {
     potentialConflicts = findPotentialConflicts(index);
   }
 

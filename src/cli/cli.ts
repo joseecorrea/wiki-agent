@@ -59,7 +59,7 @@ async function main() {
       break;
     }
     case "index": {
-      await indexCommand(projectDir);
+      await indexCommand(projectDir, values.force as boolean | undefined);
       break;
     }
     case "stats": {
@@ -102,7 +102,7 @@ Options:
   --type <type>       Filter by page type (search)
   --confidence <lvl>  Filter by confidence (search)
   --tags <t1,t2>      Filter by tags (search)
-  -f, --force         Skip confirmation prompts (remove, update)
+  -f, --force         Skip confirmation prompts (remove, update) or force full rebuild (index)
   -h, --help          Show this help message
 
 Supported harnesses:

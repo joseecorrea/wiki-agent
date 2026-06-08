@@ -45,7 +45,7 @@ export interface LintReport {
 
 export interface IndexEntry {
   docIds: string[];
-  positions: number[];
+  positions: Record<string, number[]>;
   tf: Record<string, number>;
 }
 
@@ -73,6 +73,7 @@ export interface InvertedIndex {
   entries: Record<string, IndexEntry>;
   pages: Record<string, PageMeta>;
   stats: IndexStats;
+  fileStates: Record<string, { hash: string }>;
 }
 
 export type Harness = "opencode" | "claude-code" | "codex" | "cursor";
