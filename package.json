@@ -29,7 +29,8 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "files": [
     "dist",

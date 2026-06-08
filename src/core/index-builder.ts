@@ -1,12 +1,12 @@
 import { readFileSync, existsSync, writeFileSync, mkdirSync, readdirSync, statSync } from "node:fs";
 import { join, relative, dirname } from "node:path";
-import { tokenize, tokenizeWithPositions } from "./tokenizer.js";
+import { tokenize, tokenizeWithPositions, detectLanguage } from "./tokenizer.js";
 import { parsePage } from "./markdown.js";
 import { normalizePageId, getPagesDir, getWikiDir, getIndexPath, listPageFiles, readText } from "./utils.js";
 import { writeFileAtomic } from "./atomic-write.js";
 import type { InvertedIndex, IndexEntry, PageMeta, IndexStats, Page } from "./types.js";
 
-const INDEX_VERSION = 1;
+const INDEX_VERSION = 2;
 
 export function buildIndex(projectDir: string): InvertedIndex {
   const wikiDir = getWikiDir(projectDir);
@@ -36,8 +36,9 @@ export function buildIndex(projectDir: string): InvertedIndex {
     const pageId = page ? page.frontmatter.title.toLowerCase().replace(/\s+/g, "-") : normalizePageId(relative(wikiDir, filePath));
 
     const textToIndex = page ? page.body : raw;
-    const tokenPositions = tokenizeWithPositions(textToIndex);
-    const tokenList = tokenize(textToIndex);
+    const lang = detectLanguage(textToIndex);
+    const tokenPositions = tokenizeWithPositions(textToIndex, lang);
+    const tokenList = tokenize(textToIndex, lang);
     docLengths[pageId] = tokenList.length;
     totalTerms += tokenList.length;
 
@@ -108,6 +109,7 @@ export function loadIndex(projectDir: string): InvertedIndex | null {
 }
 
 export function isIndexStale(projectDir: string, index: InvertedIndex): boolean {
+  if (index.version !== INDEX_VERSION) return true;
   const wikiDir = getWikiDir(projectDir);
   const pagesDir = getPagesDir(projectDir);
   const builtAt = new Date(index.builtAt);

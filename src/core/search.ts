@@ -1,4 +1,4 @@
-import { tokenize } from "./tokenizer.js";
+import { tokenize, detectLanguage } from "./tokenizer.js";
 import type { InvertedIndex, SearchResult } from "./types.js";
 
 const K1 = 1.2;
@@ -16,7 +16,8 @@ export function search(
   index: InvertedIndex,
   options: SearchOptions = {},
 ): SearchResult[] {
-  const queryTokens = tokenize(query);
+  const queryLang = detectLanguage(query);
+  const queryTokens = tokenize(query, queryLang);
   if (queryTokens.length === 0) return [];
 
   const { type, confidence, tags, limit = 10 } = options;
@@ -65,7 +66,8 @@ export function search(
 }
 
 export function getPageExcerpt(raw: string, query: string, maxLength = 200): string {
-  const queryTokens = new Set(tokenize(query));
+  const excerptLang = detectLanguage(query);
+  const queryTokens = new Set(tokenize(query, excerptLang));
   const sentences = raw.replace(/\n+/g, " ").split(/(?<=[.!?])\s+/);
   let bestSentence = sentences[0] ?? raw.slice(0, maxLength);
   let bestScore = 0;
