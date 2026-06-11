@@ -7,6 +7,7 @@ import { statusCommand } from "./commands/status.js";
 import { searchCommand } from "./commands/search.js";
 import { indexCommand } from "./commands/index-cmd.js";
 import { updateCommand } from "./commands/update.js";
+import { updateHarnessCommand } from "./commands/update-harness.js";
 import { statsCommand } from "./commands/stats.js";
 
 async function main() {
@@ -39,6 +40,11 @@ async function main() {
     }
     case "update": {
       await updateCommand(projectDir, values.force as boolean | undefined);
+      break;
+    }
+    case "update-harness": {
+      const harness = positionals[1];
+      await updateHarnessCommand(projectDir, harness);
       break;
     }
     case "status": {
@@ -87,14 +93,15 @@ function printHelp() {
 wiki-agent - Persistent memory wiki for LLM agents
 
 Usage:
-  wiki-agent init [options]           Initialize wiki in a project
+  wiki-agent init [options]             Initialize wiki in a project
   wiki-agent update [options]           Migrate legacy wiki to memory/ structure
-  wiki-agent add-harness <harness>    Add sub-agents for a specific harness
-  wiki-agent remove [options]         Remove all wiki-agent data from project
-  wiki-agent status [options]         Show wiki status
-  wiki-agent stats [options]          Show token savings metrics
-  wiki-agent search <query> [opts]    Search the wiki
-  wiki-agent index [options]          Build/rebuild the search index
+  wiki-agent update-harness <harness>   Update sub-agents for an initialized harness
+  wiki-agent add-harness <harness>      Add sub-agents for a specific harness
+  wiki-agent remove [options]           Remove all wiki-agent data from project
+  wiki-agent status [options]           Show wiki status
+  wiki-agent stats [options]            Show token savings metrics
+  wiki-agent search <query> [opts]      Search the wiki
+  wiki-agent index [options]            Build/rebuild the search index
 
 Options:
   --harness <type>    Agent harness (only for init)
