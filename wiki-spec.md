@@ -125,10 +125,11 @@ sources: [raw/source-file.md]
 ## Operations
 
 ### Search (wiki-search)
-1. Read `wiki/index.md` to identify relevant pages
-2. Read relevant pages
-3. Synthesize a condensed answer (~500 words max) with key facts
-4. Return summary to the main agent — **never** return raw wiki content
+1. Invoke the `wiki_search` MCP tool to query the BM25 inverted index — this finds the most relevant pages by term frequency, ranking, and supports filters (type, confidence, tags)
+2. If BM25 returns no relevant results, fall back to reading `wiki/index.md` to identify candidate pages manually
+3. Read the relevant pages identified by BM25 (or the fallback)
+4. Synthesize a condensed answer (~500 words max) with key facts
+5. Return summary to the main agent — **never** return raw wiki content
 
 ### Ingest (wiki-ingest)
 1. Read the source document from `raw/`
@@ -174,8 +175,9 @@ sources: [raw/source-file.md]
 1. **Main agent never reads wiki files directly.** Always delegate to sub-agents.
 2. **Sub-agents return condensed summaries**, not raw wiki content. Max ~500 words per response.
 3. **Auto-learn is lightweight.** It receives pre-extracted facts, not full context.
-4. **Search is targeted.** It reads the index first, then only relevant pages — never the entire wiki.
+4. **Search is targeted.** It queries the BM25 inverted index first via the `wiki_search` MCP tool, then only relevant pages — never the entire wiki.
 5. **Lint is periodic.** Run once per session at most, not on every interaction.
+6. **Main agent must search the wiki first.** Before using bash/grep/find/ls or other system search tools to look up project information, delegate to `wiki-search` first. The wiki is the authoritative source of project context.
 
 ## Cross-Harness Compatibility
 

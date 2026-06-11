@@ -160,11 +160,15 @@ The main agent **never reads wiki files directly**. Instead:
 ```
 Agent needs context about auth
   → delegates to wiki-search
-  ← receives 500-word condensed summary
+    → wiki-search invokes wiki_search MCP tool (BM25)
+    ← gets ranked pages from inverted index
+    → reads only those pages
+    ← synthesizes 500-word condensed summary
+  ← returns summary to main agent
   → continues work with clean context
 ```
 
-Or uses `wiki_search` MCP tool for targeted BM25 queries.
+The sub-agent uses the `wiki_search` MCP tool for targeted BM25 queries, and only falls back to reading `index.md` if no results are found.
 
 ### Token Savings Metrics
 
@@ -202,6 +206,8 @@ Wiki-Agent uses a custom BM25 inverted index with:
 - Type, confidence, and tag filters
 - Automatic index rebuilding when pages change
 - Index tracked in git (`.wiki-agent/index.json`)
+
+The sub-agent `wiki-search` invokes the `wiki_search` MCP tool as its primary search mechanism, which queries the BM25 inverted index. Only if no results are found does it fall back to reading `wiki/index.md` for manual navigation.
 
 ```bash
 # Build the search index
