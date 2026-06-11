@@ -39,10 +39,10 @@ function collectLegacyItems(projectDir: string): RemovalItem[] {
     items.push({ type: "dir", path: wikiAgentDir, description: "BM25 search index directory" });
   }
 
-  // 2. Raw assets (creado por wiki-agent), pero con cuidado
-  const rawAssetsDir = join(projectDir, "raw", "assets");
-  if (existsSync(rawAssetsDir)) {
-    items.push({ type: "dir", path: rawAssetsDir, description: "Raw assets directory (created by wiki-agent)" });
+  // 2. Raw directory (creado por wiki-agent)
+  const rawDir = join(projectDir, "raw");
+  if (existsSync(rawDir)) {
+    items.push({ type: "dir", path: rawDir, description: "Raw directory (created by wiki-agent)" });
   }
 
   // 3. wiki-spec.md
@@ -69,10 +69,10 @@ function collectMemoryItems(projectDir: string): RemovalItem[] {
     items.push({ type: "dir", path: wikiAgentDir, description: "BM25 search index directory" });
   }
 
-  // 2. Raw assets
-  const rawAssetsDir = join(memoryDir, "raw", "assets");
-  if (existsSync(rawAssetsDir)) {
-    items.push({ type: "dir", path: rawAssetsDir, description: "Raw assets directory (created by wiki-agent)" });
+  // 2. Raw directory
+  const rawDir = join(memoryDir, "raw");
+  if (existsSync(rawDir)) {
+    items.push({ type: "dir", path: rawDir, description: "Raw directory (created by wiki-agent)" });
   }
 
   // 3. wiki-spec.md
@@ -141,9 +141,7 @@ export function collectItems(projectDir: string): RemovalItem[] {
     try {
       const json = JSON.parse(content) as Record<string, unknown>;
       const hasWikiAgentKeys =
-        (json.mcp && typeof json.mcp === "object" && "wiki-agent" in (json.mcp as Record<string, unknown>)) ||
-        (json.agent && typeof json.agent === "object" &&
-          Object.keys(json.agent as Record<string, unknown>).some((k) => k.startsWith("wiki-")));
+        json.mcp && typeof json.mcp === "object" && "wiki-agent" in (json.mcp as Record<string, unknown>);
       if (hasWikiAgentKeys) {
         items.push({ type: "json-keys", path: opencodeJsonPath, description: "Wiki-Agent entries in opencode.json" });
       }
@@ -166,21 +164,6 @@ export function cleanWikiAgentFromJson(obj: Record<string, unknown>): Record<str
       delete result.mcp;
     } else {
       result.mcp = mcp;
-    }
-  }
-
-  // Remove agent.wiki-*
-  if (result.agent && typeof result.agent === "object" && !Array.isArray(result.agent)) {
-    const agent = { ...(result.agent as Record<string, unknown>) };
-    for (const key of Object.keys(agent)) {
-      if (key.startsWith("wiki-")) {
-        delete agent[key];
-      }
-    }
-    if (Object.keys(agent).length === 0) {
-      delete result.agent;
-    } else {
-      result.agent = agent;
     }
   }
 
@@ -207,16 +190,21 @@ function removeAgentDirsIfEmpty(projectDir: string): void {
   }
 }
 
-function removeRawIfEmpty(projectDir: string): void {
-  // Check memory/raw first, then legacy raw/
-  const memoryRawDir = join(projectDir, "memory", "raw");
-  if (existsSync(memoryRawDir) && isDirEmpty(memoryRawDir)) {
-    rmdirSync(memoryRawDir);
-  }
+function removeMemoryIfEmpty(projectDir: string): void {
+  const memoryDir = join(projectDir, "memory");
+  if (!existsSync(memoryDir)) return;
 
-  const rawDir = join(projectDir, "raw");
-  if (existsSync(rawDir) && isDirEmpty(rawDir)) {
-    rmdirSync(rawDir);
+  const SYSTEM_FILES = [".DS_Store", ".localized"];
+  const items = readdirSync(memoryDir);
+
+  const hasOnlySystemFiles = items.every((item) => SYSTEM_FILES.includes(item));
+
+  if (hasOnlySystemFiles || items.length === 0) {
+    // Remove system files first, then the directory
+    for (const file of items) {
+      rmSync(join(memoryDir, file), { force: true });
+    }
+    rmdirSync(memoryDir);
   }
 }
 
@@ -264,11 +252,14 @@ export async function removeCommand(projectDir: string, force = false): Promise<
   const removed: string[] = [];
   const modified: string[] = [];
 
-  for (const item of items) {
-    if (item.type === "dir") {
-      rmSync(item.path, { recursive: true, force: true });
-      removed.push(getRelativePath(projectDir, item.path));
-    } else if (item.type === "file") {
+  // Remove files/sections/json-keys first, then directories.
+  // This ensures withFileLock can still find the project root via memory/.wiki-agent
+  // before the marker directories are deleted.
+  const nonDirs = items.filter((i) => i.type !== "dir");
+  const dirs = items.filter((i) => i.type === "dir");
+
+  for (const item of nonDirs) {
+    if (item.type === "file") {
       rmSync(item.path, { force: true });
       removed.push(getRelativePath(projectDir, item.path));
     } else if (item.type === "section") {
@@ -295,9 +286,14 @@ export async function removeCommand(projectDir: string, force = false): Promise<
     }
   }
 
-  // Cleanup empty agent directories and raw/
+  for (const item of dirs) {
+    rmSync(item.path, { recursive: true, force: true });
+    removed.push(getRelativePath(projectDir, item.path));
+  }
+
+  // Cleanup empty agent directories and memory/
   removeAgentDirsIfEmpty(projectDir);
-  removeRawIfEmpty(projectDir);
+  removeMemoryIfEmpty(projectDir);
 
   s.stop("Removal complete");
 

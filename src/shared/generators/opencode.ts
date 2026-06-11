@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { mergeIntoFile, mergeIntoJson } from "../merger.js";
 import {
   WIKI_AGENTS,
-  AGENT_DESCRIPTIONS,
   createWikiStructure,
   createAgentFiles,
   createWikiSpec,
@@ -76,15 +75,6 @@ function buildAgentConfig(): Record<string, unknown> {
         enabled: true,
       },
     },
-    agent: Object.fromEntries(
-      WIKI_AGENTS.map((name) => [
-        name,
-        {
-          mode: "subagent",
-          description: AGENT_DESCRIPTIONS[name],
-        },
-      ]),
-    ),
     permission: {
       task: {
         "wiki-*": "allow",
@@ -104,15 +94,6 @@ function buildFullConfig(): Record<string, unknown> {
         enabled: true,
       },
     },
-    agent: Object.fromEntries(
-      WIKI_AGENTS.map((name) => [
-        name,
-        {
-          mode: "subagent",
-          description: AGENT_DESCRIPTIONS[name],
-        },
-      ]),
-    ),
     permission: {
       task: {
         "wiki-*": "allow",
@@ -121,4 +102,4 @@ function buildFullConfig(): Record<string, unknown> {
   };
 }
 
-export { WIKI_AGENTS, AGENT_DESCRIPTIONS };
+export { WIKI_AGENTS };

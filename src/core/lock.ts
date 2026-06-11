@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, rmdirSync, statSync, unlinkSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { createHash } from "node:crypto";
 
 const LOCK_DIR_NAME = "memory/.wiki-agent/locks";
@@ -29,14 +29,21 @@ export function findProjectDir(filePath: string): string {
   while (dir !== root) {
     // Check new memory/ structure first
     if (existsSync(join(dir, "memory", ".wiki-agent")) || existsSync(join(dir, "memory", "wiki"))) {
-      return dir;
+      // Prevent false positives when dir is already inside a memory/ folder
+      // (e.g., /project/memory/memory/.wiki-agent would be found)
+      if (basename(dir) !== "memory") {
+        return dir;
+      }
     }
     // Fallback to legacy root-level structure
     if (existsSync(join(dir, ".wiki-agent")) || existsSync(join(dir, "wiki"))) {
-      console.warn(
-        `[wiki-agent] Using legacy wiki structure at project root. Run 'wiki-agent update' to migrate to memory/.`,
-      );
-      return dir;
+      // Prevent false positives when dir is already inside a memory/ folder
+      if (basename(dir) !== "memory") {
+        console.warn(
+          `[wiki-agent] Using legacy wiki structure at project root. Run 'wiki-agent update' to migrate to memory/.`,
+        );
+        return dir;
+      }
     }
     const parent = dirname(dir);
     if (parent === dir) break;

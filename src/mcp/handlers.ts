@@ -1,13 +1,25 @@
-import { resolve } from "node:path";
+import { resolve, join } from "node:path";
 import { searchWiki, lintWiki, getWikiStatus, buildAndSaveIndex } from "../core/wiki-ops.js";
 import { findPotentialConflicts } from "../core/judge.js";
 import { loadIndex, isIndexStale, buildIndex, saveIndex as saveIndexToDisk } from "../core/index-builder.js";
 import { recordMetric, estimateSearchTokensSaved, estimateWikiTokensSaved } from "../core/metrics.js";
 import { estimateTokens } from "../core/token-estimator.js";
+import { findProjectDir } from "../core/lock.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 function getProjectDir(): string {
-  return process.env.WIKI_AGENT_PROJECT_DIR ?? process.cwd();
+  if (process.env.WIKI_AGENT_PROJECT_DIR) {
+    return process.env.WIKI_AGENT_PROJECT_DIR;
+  }
+
+  const cwd = process.cwd();
+  try {
+    // Use findProjectDir with a dummy file in cwd to discover the project root.
+    // This prevents incorrect cwd (e.g., inside memory/) from causing nested directories.
+    return findProjectDir(join(cwd, "dummy.md"));
+  } catch {
+    return cwd;
+  }
 }
 
 function textResult(content: string): CallToolResult {
