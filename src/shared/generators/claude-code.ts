@@ -13,9 +13,10 @@ export function generateSubagentsForClaudeCode(
   wikiSection: string,
   actions: string[],
   warnings: string[],
+  force = false,
 ): void {
   const agentsDir = join(projectDir, ".claude", "agents");
-  createAgentFiles(projectDir, agentsDir, templates, actions, warnings);
+  createAgentFiles(projectDir, agentsDir, templates, actions, warnings, force);
 
   const claudeMdPath = join(projectDir, "CLAUDE.md");
   const result = mergeIntoFile(claudeMdPath, wikiSection.trim());

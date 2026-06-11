@@ -16,9 +16,10 @@ export function generateSubagentsForOpenCode(
   wikiSection: string,
   actions: string[],
   warnings: string[],
+  force = false,
 ): void {
   const agentsDir = join(projectDir, ".opencode", "agents");
-  createAgentFiles(projectDir, agentsDir, templates, actions, warnings);
+  createAgentFiles(projectDir, agentsDir, templates, actions, warnings, force);
 
   const agentsMdPath = join(projectDir, "AGENTS.md");
   const result = mergeIntoFile(agentsMdPath, wikiSection.trim());
@@ -84,6 +85,11 @@ function buildAgentConfig(): Record<string, unknown> {
         },
       ]),
     ),
+    permission: {
+      task: {
+        "wiki-*": "allow",
+      },
+    },
   };
 }
 
@@ -107,6 +113,11 @@ function buildFullConfig(): Record<string, unknown> {
         },
       ]),
     ),
+    permission: {
+      task: {
+        "wiki-*": "allow",
+      },
+    },
   };
 }
 

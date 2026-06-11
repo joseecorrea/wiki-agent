@@ -13,9 +13,10 @@ export function generateSubagentsForCodex(
   wikiSection: string,
   actions: string[],
   warnings: string[],
+  force = false,
 ): void {
   const agentsDir = join(projectDir, ".codex", "agents");
-  createAgentFiles(projectDir, agentsDir, templates, actions, warnings);
+  createAgentFiles(projectDir, agentsDir, templates, actions, warnings, force);
 
   const agentsMdPath = join(projectDir, "AGENTS.md");
   const result = mergeIntoFile(agentsMdPath, wikiSection.trim());

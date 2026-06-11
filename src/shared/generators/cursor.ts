@@ -13,9 +13,10 @@ export function generateSubagentsForCursor(
   wikiSection: string,
   actions: string[],
   warnings: string[],
+  force = false,
 ): void {
   const agentsDir = join(projectDir, ".cursor", "agents");
-  createAgentFiles(projectDir, agentsDir, templates, actions, warnings);
+  createAgentFiles(projectDir, agentsDir, templates, actions, warnings, force);
 
   const cursorRulesPath = join(projectDir, ".cursorrules");
   const result = mergeIntoFile(cursorRulesPath, wikiSection.trim());

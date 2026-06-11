@@ -11,19 +11,20 @@ export function generateSubagentsForHarness(
   wikiSection: string,
   actions: string[],
   warnings: string[],
+  force = false,
 ): void {
   switch (harness) {
     case "opencode":
-      generateSubagentsForOpenCode(projectDir, templates, wikiSection, actions, warnings);
+      generateSubagentsForOpenCode(projectDir, templates, wikiSection, actions, warnings, force);
       break;
     case "claude-code":
-      generateSubagentsForClaudeCode(projectDir, templates, wikiSection, actions, warnings);
+      generateSubagentsForClaudeCode(projectDir, templates, wikiSection, actions, warnings, force);
       break;
     case "codex":
-      generateSubagentsForCodex(projectDir, templates, wikiSection, actions, warnings);
+      generateSubagentsForCodex(projectDir, templates, wikiSection, actions, warnings, force);
       break;
     case "cursor":
-      generateSubagentsForCursor(projectDir, templates, wikiSection, actions, warnings);
+      generateSubagentsForCursor(projectDir, templates, wikiSection, actions, warnings, force);
       break;
   }
 }

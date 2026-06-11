@@ -107,6 +107,7 @@ export function createAgentFiles(
   templates: Map<string, string>,
   actions: string[],
   warnings: string[],
+  force = false,
 ): void {
   if (!existsSync(agentsDir)) {
     mkdirSync(agentsDir, { recursive: true });
@@ -121,6 +122,16 @@ export function createAgentFiles(
       if (template) {
         writeFileSync(destPath, template, "utf-8");
         actions.push("Created sub-agent: " + relativeAgentsDir + "/" + agentName + ".md");
+      } else {
+        warnings.push(
+          "Template not found for " + agentName + ". Agent file needs to be created manually.",
+        );
+      }
+    } else if (force) {
+      const template = templates.get(agentName);
+      if (template) {
+        writeFileSync(destPath, template, "utf-8");
+        actions.push("Updated sub-agent: " + relativeAgentsDir + "/" + agentName + ".md");
       } else {
         warnings.push(
           "Template not found for " + agentName + ". Agent file needs to be created manually.",
