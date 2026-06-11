@@ -29,7 +29,7 @@ export async function handleSearch(args: { query: string; type?: string; confide
   }
 
   const output = results
-    .map((r, i) => `${i + 1}. [[${r.title}]] (score: ${r.score}) | type: ${r.type} | confidence: ${r.confidence}\n   ${r.excerpt}`)
+    .map((r, i) => `${i + 1}. [[${r.title}]] (path: ${r.path}) (score: ${r.score}) | type: ${r.type} | confidence: ${r.confidence}\n   ${r.excerpt}`)
     .join("\n\n");
 
   const saved = estimateSearchTokensSaved(projectDir, results);
