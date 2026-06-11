@@ -55,6 +55,27 @@ export function normalizePageId(filePath: string): string {
     .toLowerCase();
 }
 
+/**
+ * Convert a page title into a safe, readable slug suitable for a filename.
+ * Rules:
+ *   - Lowercase
+ *   - Remove accents (é → e, ó → o, etc.)
+ *   - Replace spaces and underscores with hyphens
+ *   - Remove characters that are not alphanumeric or hyphens
+ *   - Collapse multiple consecutive hyphens
+ *   - Trim leading/trailing hyphens
+ */
+export function slugifyTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s_-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export function getPagePath(projectDir: string, pageId: string): string {
   return resolveSafePath(projectDir, MEMORY_DIR_NAME, WIKI_DIR_NAME, PAGES_DIR_NAME, `${pageId}.md`);
 }

@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { join, relative, dirname } from "node:path";
 import { tokenize, tokenizeWithPositions, detectLanguage } from "./tokenizer.js";
 import { parsePage } from "./markdown.js";
-import { normalizePageId, getPagesDir, getWikiDir, getIndexPath, listPageFiles, readText } from "./utils.js";
+import { normalizePageId, slugifyTitle, getPagesDir, getWikiDir, getIndexPath, listPageFiles, readText } from "./utils.js";
 import { writeFileAtomic } from "./atomic-write.js";
 import type { InvertedIndex, IndexEntry, PageMeta, IndexStats, Page } from "./types.js";
 
@@ -18,7 +18,7 @@ function getPageIdForFile(filePath: string, wikiDir: string): string {
   const raw = readFileSync(filePath, "utf-8");
   const page = parsePage(raw, filePath);
   return page
-    ? page.frontmatter.title.toLowerCase().replace(/\s+/g, "-")
+    ? slugifyTitle(page.frontmatter.title)
     : normalizePageId(relative(wikiDir, filePath));
 }
 
@@ -270,11 +270,26 @@ export function buildIndex(projectDir: string): InvertedIndex {
   };
 }
 
+function isValidInvertedIndex(data: unknown): data is InvertedIndex {
+  if (typeof data !== "object" || data === null) return false;
+  const d = data as Record<string, unknown>;
+  return (
+    d.version === INDEX_VERSION &&
+    typeof d.builtAt === "string" &&
+    typeof d.entries === "object" && d.entries !== null &&
+    typeof d.pages === "object" && d.pages !== null &&
+    typeof d.stats === "object" && d.stats !== null &&
+    typeof d.fileStates === "object" && d.fileStates !== null
+  );
+}
+
 export function loadIndex(projectDir: string): InvertedIndex | null {
   const indexPath = getIndexPath(projectDir);
   if (!existsSync(indexPath)) return null;
   try {
-    return JSON.parse(readFileSync(indexPath, "utf-8")) as InvertedIndex;
+    const data = JSON.parse(readFileSync(indexPath, "utf-8")) as unknown;
+    if (!isValidInvertedIndex(data)) return null;
+    return data;
   } catch {
     return null;
   }

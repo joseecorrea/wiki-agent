@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { buildIndex, updateIndex, isIndexStale, removePageFromIndex } from "./index-builder.js";
+import { buildIndex, updateIndex, isIndexStale, removePageFromIndex, loadIndex } from "./index-builder.js";
+import { getIndexPath } from "./utils.js";
+import { searchWiki } from "./wiki-ops.js";
 import type { InvertedIndex } from "./types.js";
 
 function createTestWiki(projectDir: string, files: Record<string, string>) {
@@ -197,5 +199,61 @@ describe("index-builder", () => {
     assert.equal(updated.stats.totalPages, index.stats.totalPages);
     assert.equal(updated.stats.totalTerms, index.stats.totalTerms);
     assert.deepEqual(Object.keys(updated.pages).sort(), Object.keys(index.pages).sort());
+  });
+
+  it("loadIndex returns null for legacy v1 index format", () => {
+    createTestWiki(projectDir, {
+      "pages/auth.md": pageContent("Authentication", "JWT auth pattern"),
+    });
+
+    const legacyIndex = {
+      version: "1.0.0",
+      lastUpdated: "2026-06-11T00:00:00.000Z",
+      totalPages: 1,
+      index: {
+        username: ["username-rules.md"],
+      },
+      pages: {
+        "username-rules.md": {
+          path: "memory/wiki/pages/username-rules.md",
+          title: "Reglas de Validación de Username",
+          type: "architecture",
+          confidence: "high",
+          date: "2026-06-11",
+          tags: ["username", "validation"],
+          wordCount: 80,
+          tokens: ["username"],
+        },
+      },
+    };
+
+    const indexPath = getIndexPath(projectDir);
+    mkdirSync(join(indexPath, ".."), { recursive: true });
+    writeFileSync(indexPath, JSON.stringify(legacyIndex, null, 2));
+
+    const loaded = loadIndex(projectDir);
+    assert.equal(loaded, null);
+  });
+
+  it("searchWiki does not crash when legacy index is present", () => {
+    createTestWiki(projectDir, {
+      "pages/auth.md": pageContent("Authentication", "JWT auth pattern"),
+    });
+
+    const legacyIndex = {
+      version: "1.0.0",
+      lastUpdated: "2026-06-11T00:00:00.000Z",
+      totalPages: 1,
+      index: {},
+      pages: {},
+    };
+
+    const indexPath = getIndexPath(projectDir);
+    mkdirSync(join(indexPath, ".."), { recursive: true });
+    writeFileSync(indexPath, JSON.stringify(legacyIndex, null, 2));
+
+    const results = searchWiki(projectDir, "JWT");
+    assert.equal(results.length, 1);
+    assert.equal(results[0].title, "Authentication");
   });
 });

@@ -4,24 +4,28 @@ import { buildIndex, saveIndex, loadIndex, isIndexStale, updateIndex } from "./i
 import { search as bm25Search, getPageExcerpt } from "./search.js";
 import { findPotentialConflicts } from "./judge.js";
 import { parsePage, extractWikiLinks } from "./markdown.js";
-import { getWikiDir, getPagesDir, listPageFiles, readText, resolveSafePath } from "./utils.js";
+import { getWikiDir, getPagesDir, listPageFiles, readText, resolveSafePath, slugifyTitle } from "./utils.js";
 import { withIndexLock } from "./lock.js";
 import type { SearchResult, LintReport, ConflictPair } from "./types.js";
 
 export function searchWiki(projectDir: string, query: string, options?: { type?: string; confidence?: string; tags?: string[]; limit?: number }): SearchResult[] {
   let index = loadIndex(projectDir);
-  if (!index || isIndexStale(projectDir, index)) {
+  if (!index || !index.stats || isIndexStale(projectDir, index)) {
     if (!existsSync(getWikiDir(projectDir))) return [];
     index = withIndexLock(projectDir, () => {
       // Double-check inside lock to avoid redundant rebuilds
       const current = loadIndex(projectDir);
-      if (current && !isIndexStale(projectDir, current)) {
+      if (current && current.stats && !isIndexStale(projectDir, current)) {
         return current;
       }
       const fresh = current ? updateIndex(projectDir, current) : buildIndex(projectDir);
       saveIndex(projectDir, fresh);
       return fresh;
     });
+  }
+
+  if (!index || !index.stats) {
+    return [];
   }
 
   const results = bm25Search(query, index, options);
@@ -47,11 +51,11 @@ export function buildAndSaveIndex(projectDir: string): number {
 export function updateAndSaveIndex(projectDir: string): { totalPages: number; changed: boolean } {
   return withIndexLock(projectDir, () => {
     const current = loadIndex(projectDir);
-    const beforeFileCount = current ? Object.keys(current.fileStates).length : 0;
+    const beforeFileCount = current && current.fileStates ? Object.keys(current.fileStates).length : 0;
     const index = current && !isIndexStale(projectDir, current)
       ? current
       : (current ? updateIndex(projectDir, current) : buildIndex(projectDir));
-    const changed = index !== current || Object.keys(index.fileStates).length !== beforeFileCount;
+    const changed = index !== current || Object.keys(index.fileStates ?? {}).length !== beforeFileCount;
     if (index !== current) {
       saveIndex(projectDir, index);
     }
@@ -86,7 +90,7 @@ export function lintWiki(projectDir: string): LintReport {
     const raw = readFileSync(filePath, "utf-8");
     const page = parsePage(raw, filePath);
     if (page) {
-      const name = page.frontmatter.title.toLowerCase().replace(/\s+/g, "-");
+      const name = slugifyTitle(page.frontmatter.title);
       pages.set(name, { path: filePath, frontmatter: page });
       allPageNames.add(name);
       const links = extractWikiLinks(page.body);
@@ -115,7 +119,7 @@ export function lintWiki(projectDir: string): LintReport {
   const missingLinks: { from: string; missing: string }[] = [];
   for (const [name, links] of allLinks) {
     for (const link of links) {
-      const resolvedLink = link.toLowerCase().replace(/\s+/g, "-");
+      const resolvedLink = slugifyTitle(link);
       if (!allPageNames.has(resolvedLink)) {
         missingPages.push(resolvedLink);
         missingLinks.push({ from: name, missing: link });
